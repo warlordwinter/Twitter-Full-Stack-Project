@@ -153,6 +153,7 @@ const Register = () => {
             onKeyDown={registerOnEnter}
             onChange={(event) => setLastName(event.target.value)}
           />
+          {/* 50:00 duplicate code 57:47*/}
           <label htmlFor="lastNameInput">Last Name</label>
         </div>
         <div className="form-floating">

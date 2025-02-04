@@ -1,20 +1,18 @@
 import { User } from "tweeter-shared";
 import { Link } from "react-router-dom";
-import { UserInfoContext } from "../userInfo/UserInfoProvider";
-import { useContext } from "react";
-import useToastListener from "../toaster/ToastListenerHook";
+// import useToastListener from "../toaster/ToastListenerHook";
 import useNavigationListener from "../navigationHook/NavigationListenerHook";
+// import useUserInfo from "../userInfo/UseUserInfo";
 
 interface Props {
   value: User;
 }
 
 const UserItem = (props: Props) => {
-  const { displayErrorMessage } = useToastListener();
   const { navigateToUser } = useNavigationListener();
-  const { setDisplayedUser, currentUser, authToken } =
-    useContext(UserInfoContext);
-
+  // const { displayErrorMessage } = useToastListener();
+  // const { setDisplayedUser, currentUser, authToken } =
+  //   useUserInfo();
   // this is dup code jijk;kfjl;aklj;s;lkjfsdlkj;sdfalkj;fdaslkj;asfdlkj;fasdlkj;sdfalkj;asdlk;jlkj;alkj;afsdlkjfsdal;jkasdflkj;fdsalkj;asdfklj;adfs;lkjsadf;l
 
   return (

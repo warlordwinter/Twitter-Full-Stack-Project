@@ -157,7 +157,13 @@ const Register = () => {
           {/* 50:00 duplicate code 57:47*/}
           <label htmlFor="lastNameInput">Last Name</label>
         </div>
-        <AuthenticationFields passedInFunction={registerOnEnter} />
+        <AuthenticationFields
+          passedInFunction={registerOnEnter}
+          setAlias={setAlias}
+          setPassword={setPassword}
+          alias={alias}
+          password={password}
+        />
         <div className="form-floating mb-3">
           <input
             type="file"

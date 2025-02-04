@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { UserInfoContext } from "../userInfo/UserInfoProvider";
-import { AuthToken, FakeData, Status, User } from "tweeter-shared";
+import { AuthToken, Status } from "tweeter-shared";
 import { useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import useToastListener from "../toaster/ToastListenerHook";
@@ -8,7 +8,17 @@ import StatusItem from "../statusItem/StatusItem";
 
 export const PAGE_SIZE = 10;
 
-const FeedScroller = () => {
+interface Props {
+  itemDescription: string;
+  loadMoreFeedStory: (
+    authToken: AuthToken,
+    userAlias: string,
+    pageSize: number,
+    lastItem: Status | null
+  ) => Promise<[Status[], boolean]>;
+}
+
+const StatusItemScroller = (props: Props) => {
   const { displayErrorMessage } = useToastListener();
   const [items, setItems] = useState<Status[]>([]);
   const [newItems, setNewItems] = useState<Status[]>([]);
@@ -50,7 +60,7 @@ const FeedScroller = () => {
 
   const loadMoreItems = async () => {
     try {
-      const [newItems, hasMore] = await loadMoreFeedItems(
+      const [newItems, hasMore] = await props.loadMoreFeedStory(
         authToken!,
         displayedUser!.alias,
         PAGE_SIZE,
@@ -63,19 +73,9 @@ const FeedScroller = () => {
       setChangedDisplayedUser(false);
     } catch (error) {
       displayErrorMessage(
-        `Failed to load feed items because of exception: ${error}`
+        `Failed to load ${props.itemDescription} because of exception: ${error}`
       );
     }
-  };
-
-  const loadMoreFeedItems = async (
-    authToken: AuthToken,
-    userAlias: string,
-    pageSize: number,
-    lastItem: Status | null
-  ): Promise<[Status[], boolean]> => {
-    // TODO: Replace with the result of calling server
-    return FakeData.instance.getPageOfStatuses(lastItem, pageSize);
   };
 
   return (
@@ -101,4 +101,4 @@ const FeedScroller = () => {
   );
 };
 
-export default FeedScroller;
+export default StatusItemScroller;

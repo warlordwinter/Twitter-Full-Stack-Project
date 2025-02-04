@@ -72,7 +72,13 @@ const Login = (props: Props) => {
   const inputFieldGenerator = () => {
     return (
       <>
-        <AuthenticationFields passedInFunction={loginOnEnter} />
+        <AuthenticationFields
+          passedInFunction={loginOnEnter}
+          setAlias={setAlias}
+          setPassword={setPassword}
+          alias={alias}
+          password={password}
+        />
       </>
     );
   };

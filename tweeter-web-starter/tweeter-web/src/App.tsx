@@ -86,6 +86,7 @@ const AuthenticatedRoutes = () => {
           path="feed"
           element={
             <StatusItemScroller
+              key={1}
               itemDescription="feed items"
               loadMoreFeedStory={loadMoreFeedItems}
             />
@@ -95,6 +96,7 @@ const AuthenticatedRoutes = () => {
           path="story"
           element={
             <StatusItemScroller
+              key={2}
               itemDescription="story items"
               loadMoreFeedStory={loadMoreStoryItems}
             />

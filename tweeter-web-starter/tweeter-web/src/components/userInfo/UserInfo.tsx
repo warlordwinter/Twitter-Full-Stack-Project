@@ -207,33 +207,3 @@ export default UserInfo;
 //     );
 //   }
 // };
-
-// const follow = async (
-//   authToken: AuthToken,
-//   userToFollow: User
-// ): Promise<[followerCount: number, followeeCount: number]> => {
-//   // Pause so we can see the follow message. Remove when connected to the server
-//   await new Promise((f) => setTimeout(f, 2000));
-
-//   // TODO: Call the server
-
-//   const followerCount = await getFollowerCount(authToken, userToFollow);
-//   const followeeCount = await getFolloweeCount(authToken, userToFollow);
-
-//   return [followerCount, followeeCount];
-// };
-
-// const unfollow = async (
-//   authToken: AuthToken,
-//   userToUnfollow: User
-// ): Promise<[followerCount: number, followeeCount: number]> => {
-//   // Pause so we can see the unfollow message. Remove when connected to the server
-//   await new Promise((f) => setTimeout(f, 2000));
-
-//   // TODO: Call the server
-
-//   const followerCount = await getFollowerCount(authToken, userToUnfollow);
-//   const followeeCount = await getFolloweeCount(authToken, userToUnfollow);
-
-//   return [followerCount, followeeCount];
-// };

@@ -1,61 +1,37 @@
-import "./PostStatus.css";
-import { useState } from "react";
-import { AuthToken, Status } from "tweeter-shared";
-import useToastListener from "../toaster/ToastListenerHook";
-import useUserInfo from "../userInfo/UseUserInfo";
+import './PostStatus.css';
+import { useState } from 'react';
+import useToastListener from '../toaster/ToastListenerHook';
+import useUserInfo from '../userInfo/UseUserInfo';
+import {
+  PostStatusView,
+  PostStatusPresenter,
+} from '../../presenters/PostStatusPresenter/PostStatusPresenter';
 
-const PostStatus = () => {
+interface Props {
+  presenterGenerator: (view: PostStatusView) => PostStatusPresenter;
+}
+
+const PostStatus = (props: Props) => {
   const { displayErrorMessage, displayInfoMessage, clearLastInfoMessage } =
     useToastListener();
-
   const { currentUser, authToken } = useUserInfo();
-  const [post, setPost] = useState("");
+  const [post, setPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const submitPost = async (event: React.MouseEvent) => {
-    event.preventDefault();
-
-    try {
-      setIsLoading(true);
-      displayInfoMessage("Posting status...", 0);
-
-      const status = new Status(post, currentUser!, Date.now());
-
-      await postStatus(authToken!, status);
-
-      setPost("");
-      displayInfoMessage("Status posted!", 2000);
-    } catch (error) {
-      displayErrorMessage(
-        `Failed to post the status because of exception: ${error}`
-      );
-    } finally {
-      clearLastInfoMessage();
-      setIsLoading(false);
-    }
+  const listener: PostStatusView = {
+    setIsLoading: setIsLoading,
+    displayErrorMessage: displayErrorMessage,
+    displayInfoMessage: displayInfoMessage,
+    clearLastInfoMessage: clearLastInfoMessage,
+    setPost: setPost,
+    post: post,
+    authToken: authToken,
+    currentUser: currentUser,
   };
-
-  const postStatus = async (
-    authToken: AuthToken,
-    newStatus: Status
-  ): Promise<void> => {
-    // Pause so we can see the logging out message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
-
-    // TODO: Call the server to post the status
-  };
-
-  const clearPost = (event: React.MouseEvent) => {
-    event.preventDefault();
-    setPost("");
-  };
-
-  const checkButtonStatus: () => boolean = () => {
-    return !post.trim() || !authToken || !currentUser;
-  };
+  const presenter = props.presenterGenerator(listener);
 
   return (
-    <div className={isLoading ? "loading" : ""}>
+    <div className={isLoading ? 'loading' : ''}>
       <form>
         <div className="form-group mb-3">
           <textarea
@@ -64,7 +40,7 @@ const PostStatus = () => {
             rows={10}
             placeholder="What's on your mind?"
             value={post}
-            onChange={(event) => {
+            onChange={event => {
               setPost(event.target.value);
             }}
           />
@@ -74,9 +50,9 @@ const PostStatus = () => {
             id="postStatusButton"
             className="btn btn-md btn-primary me-1"
             type="button"
-            disabled={checkButtonStatus()}
-            style={{ width: "8em" }}
-            onClick={(event) => submitPost(event)}
+            disabled={presenter.checkButtonStatus()}
+            style={{ width: '8em' }}
+            onClick={event => presenter.submitPost(event)}
           >
             {isLoading ? (
               <span
@@ -92,8 +68,8 @@ const PostStatus = () => {
             id="clearStatusButton"
             className="btn btn-md btn-secondary"
             type="button"
-            disabled={checkButtonStatus()}
-            onClick={(event) => clearPost(event)}
+            disabled={presenter.checkButtonStatus()}
+            onClick={event => presenter.clearPost(event)}
           >
             Clear
           </button>
@@ -104,3 +80,45 @@ const PostStatus = () => {
 };
 
 export default PostStatus;
+
+// const submitPost = async (event: React.MouseEvent) => {
+//   event.preventDefault();
+
+//   try {
+//     setIsLoading(true);
+//     displayInfoMessage('Posting status...', 0);
+
+//     const status = new Status(post, currentUser!, Date.now());
+
+//     await postStatus(authToken!, status);
+
+//     setPost('');
+//     displayInfoMessage('Status posted!', 2000);
+//   } catch (error) {
+//     displayErrorMessage(
+//       `Failed to post the status because of exception: ${error}`
+//     );
+//   } finally {
+//     clearLastInfoMessage();
+//     setIsLoading(false);
+//   }
+// };
+
+// const postStatus = async (
+//   authToken: AuthToken,
+//   newStatus: Status
+// ): Promise<void> => {
+//   // Pause so we can see the logging out message. Remove when connected to the server
+//   await new Promise(f => setTimeout(f, 2000));
+
+//   // TODO: Call the server to post the status
+// };
+
+// const clearPost = (event: React.MouseEvent) => {
+//   event.preventDefault();
+//   setPost('');
+// };
+
+// const checkButtonStatus: () => boolean = () => {
+//   return !post.trim() || !authToken || !currentUser;
+// };

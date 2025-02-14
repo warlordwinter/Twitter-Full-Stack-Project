@@ -1,14 +1,16 @@
-import { AuthToken, Status } from "tweeter-shared";
+import { Status } from "tweeter-shared";
 import { useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import useToastListener from "../toaster/ToastListenerHook";
 import StatusItem from "../statusItem/StatusItem";
 import useUserInfo from "../userInfo/UseUserInfo";
-import { StatusItemPresenter, StatusItemView } from "../../presenters/StatusItemPresenter/StatusItemPresenter";
-
+import {
+  StatusItemPresenter,
+  StatusItemView,
+} from "../../presenters/StatusItemPresenter/StatusItemPresenter";
 
 interface Props {
-  presenterGenerator: (view: StatusItemView) => StatusItemPresenter
+  presenterGenerator: (view: StatusItemView) => StatusItemPresenter;
 }
 
 const StatusItemScroller = (props: Props) => {
@@ -45,10 +47,10 @@ const StatusItemScroller = (props: Props) => {
     presenter.reset();
   };
 
-  const listener: StatusItemView ={
+  const listener: StatusItemView = {
     addItems: (newItems: Status[]) => setNewItems(newItems),
-    displayErrorMessage: displayErrorMessage
-  }
+    displayErrorMessage: displayErrorMessage,
+  };
 
   const [presenter] = useState(props.presenterGenerator(listener));
 

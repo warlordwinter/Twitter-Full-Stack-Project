@@ -46,6 +46,14 @@ export class UserService {
     return [followerCount, followeeCount];
   }
 
+  public async getUser(
+    authToken: AuthToken,
+    alias: string
+  ): Promise<User | null> {
+    // TODO: Replace with the result of calling server
+    return FakeData.instance.findUserByAlias(alias);
+  }
+
   public async follow(
     authToken: AuthToken,
     userToFollow: User

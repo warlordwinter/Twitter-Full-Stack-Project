@@ -1,10 +1,8 @@
 import './Register.css';
 import 'bootstrap/dist/css/bootstrap.css';
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthenticationFormLayout from '../AuthenticationFormLayout';
-import { AuthToken, FakeData, User } from 'tweeter-shared';
-import { Buffer } from 'buffer';
 import useToastListener from '../../toaster/ToastListenerHook';
 import AuthenticationFields from '../AuthenticationFields';
 import useUserInfo from '../../userInfo/UseUserInfo';
@@ -175,28 +173,6 @@ export default Register;
 //   } finally {
 //     setIsLoading(false);
 //   }
-// };
-
-// const register = async (
-//   firstName: string,
-//   lastName: string,
-//   alias: string,
-//   password: string,
-//   userImageBytes: Uint8Array,
-//   imageFileExtension: string
-// ): Promise<[User, AuthToken]> => {
-//   // Not neded now, but will be needed when you make the request to the server in milestone 3
-//   const imageStringBase64: string =
-//     Buffer.from(userImageBytes).toString("base64");
-
-//   // TODO: Replace with the result of calling the server
-//   const user = FakeData.instance.firstUser;
-
-//   if (user === null) {
-//     throw new Error("Invalid registration");
-//   }
-
-//   return [user, FakeData.instance.authToken];
 // };
 
 // const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {

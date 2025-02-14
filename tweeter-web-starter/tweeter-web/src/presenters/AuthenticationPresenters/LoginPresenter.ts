@@ -1,5 +1,5 @@
 import { NavigateFunction } from 'react-router-dom';
-import { LoginService } from '../../model/service/LoginService';
+import { AuthenticationService } from '../../model/service/AuthenticationService';
 import { AuthToken } from 'tweeter-shared/dist/model/domain/AuthToken';
 import { User } from 'tweeter-shared';
 
@@ -17,11 +17,11 @@ export interface LoginView {
 
 export class LoginPresenter {
   public view: LoginView;
-  public loginService: LoginService;
+  public loginService: AuthenticationService;
 
   constructor(view: LoginView) {
     this.view = view;
-    this.loginService = new LoginService();
+    this.loginService = new AuthenticationService();
   }
 
   public async doLogin(

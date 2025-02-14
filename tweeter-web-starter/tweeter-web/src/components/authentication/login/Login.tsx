@@ -3,14 +3,13 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthenticationFormLayout from '../AuthenticationFormLayout';
-import { AuthToken, FakeData, User } from 'tweeter-shared';
 import useToastListener from '../../toaster/ToastListenerHook';
 import AuthenticationFields from '../AuthenticationFields';
 import useUserInfo from '../../userInfo/UseUserInfo';
 import {
   LoginView,
   LoginPresenter,
-} from '../../../presenters/LoginPresenter/LoginPresenter';
+} from '../../../presenters/AuthenticationPresenters/LoginPresenter';
 //post status and logout
 interface Props {
   presenterGenerator: (view: LoginView) => LoginPresenter;

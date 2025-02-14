@@ -1,26 +1,28 @@
-import "./App.css";
+import './App.css';
 import {
   BrowserRouter,
   Navigate,
   Route,
   Routes,
   useLocation,
-} from "react-router-dom";
-import Login from "./components/authentication/login/Login";
-import Register from "./components/authentication/register/Register";
-import MainLayout from "./components/mainLayout/MainLayout";
-import Toaster from "./components/toaster/Toaster";
-import UserItemScroller from "./components/mainLayout/UserItemScroller";
-import StatusItemScroller from "./components/mainLayout/StatusItemScroller";
-import useUserInfo from "./components/userInfo/UseUserInfo";
-import { FeedPresenter } from "./presenters/StatusItemPresenter/FeedPresenter";
-import { StatusItemView } from "./presenters/StatusItemPresenter/StatusItemPresenter";
-import { StoryPresenter } from "./presenters/StatusItemPresenter/StoryPresenter";
-import { FolloweePresenter } from "./presenters/UserItemPresenter/FolloweePresenter";
-import { FollowerPresenter } from "./presenters/UserItemPresenter/FollowerPresenter";
-import { UserItemView } from "./presenters/UserItemPresenter/UserItemPresenter";
-
-
+} from 'react-router-dom';
+import Login from './components/authentication/login/Login';
+import Register from './components/authentication/register/Register';
+import MainLayout from './components/mainLayout/MainLayout';
+import Toaster from './components/toaster/Toaster';
+import UserItemScroller from './components/mainLayout/UserItemScroller';
+import StatusItemScroller from './components/mainLayout/StatusItemScroller';
+import useUserInfo from './components/userInfo/UseUserInfo';
+import { FeedPresenter } from './presenters/StatusItemPresenter/FeedPresenter';
+import { StatusItemView } from './presenters/StatusItemPresenter/StatusItemPresenter';
+import { StoryPresenter } from './presenters/StatusItemPresenter/StoryPresenter';
+import { FolloweePresenter } from './presenters/UserItemPresenter/FolloweePresenter';
+import { FollowerPresenter } from './presenters/UserItemPresenter/FollowerPresenter';
+import { UserItemView } from './presenters/UserItemPresenter/UserItemPresenter';
+import {
+  LoginPresenter,
+  LoginView,
+} from './presenters/LoginPresenter/LoginPresenter';
 
 const App = () => {
   const { currentUser, authToken } = useUserInfo();
@@ -44,8 +46,6 @@ const App = () => {
 };
 
 const AuthenticatedRoutes = () => {
-
-
   return (
     <Routes>
       <Route element={<MainLayout />}>
@@ -55,7 +55,9 @@ const AuthenticatedRoutes = () => {
           element={
             <StatusItemScroller
               key={1}
-              presenterGenerator = {(view:StatusItemView) => new FeedPresenter(view)}
+              presenterGenerator={(view: StatusItemView) =>
+                new FeedPresenter(view)
+              }
             />
           }
         />
@@ -64,8 +66,9 @@ const AuthenticatedRoutes = () => {
           element={
             <StatusItemScroller
               key={2}
-              presenterGenerator = {(view:StatusItemView) => new StoryPresenter(view)}
-
+              presenterGenerator={(view: StatusItemView) =>
+                new StoryPresenter(view)
+              }
             />
           }
         />
@@ -74,7 +77,9 @@ const AuthenticatedRoutes = () => {
           element={
             <UserItemScroller
               key={1}
-              presenterGenerator ={(view:UserItemView) => new FolloweePresenter(view)}
+              presenterGenerator={(view: UserItemView) =>
+                new FolloweePresenter(view)
+              }
             />
           }
         />
@@ -83,7 +88,9 @@ const AuthenticatedRoutes = () => {
           element={
             <UserItemScroller
               key={2}
-              presenterGenerator ={(view:UserItemView) => new FollowerPresenter(view)}
+              presenterGenerator={(view: UserItemView) =>
+                new FollowerPresenter(view)
+              }
             />
           }
         />
@@ -99,9 +106,24 @@ const UnauthenticatedRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={
+          <Login
+            presenterGenerator={(view: LoginView) => new LoginPresenter(view)}
+          />
+        }
+      />
       <Route path="/register" element={<Register />} />
-      <Route path="*" element={<Login originalUrl={location.pathname} />} />
+      <Route
+        path="*"
+        element={
+          <Login
+            presenterGenerator={(view: LoginView) => new LoginPresenter(view)}
+            originalUrl={location.pathname}
+          />
+        }
+      />
     </Routes>
   );
 };

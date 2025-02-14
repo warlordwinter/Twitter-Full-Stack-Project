@@ -4,12 +4,13 @@ import AppNavbar from '../appNavbar/AppNavbar';
 import PostStatus from '../postStatus/PostStatus';
 import UserInfo from '../userInfo/UserInfo';
 import { UserInfoPresenter } from '../../presenters/UserInfoPresenter/UserInfoPresenter';
-import { PostStatusPresenter } from '../../presenters/PostStatusPresenter/PostStatusPresenter';
+import { PostStatusPresenter } from '../../presenters/PostStatusPresenters/PostStatusPresenter';
+import { AppNavbarPresenter } from '../../presenters/AuthenticationPresenters/AppNavbarPresenter';
 
 const MainLayout = () => {
   return (
     <>
-      <AppNavbar />
+      <AppNavbar presenterGenerator={view => new AppNavbarPresenter(view)} />
       <div className="container mx-auto px-3 w-100">
         <div className="row gx-4">
           <div className="col-4">

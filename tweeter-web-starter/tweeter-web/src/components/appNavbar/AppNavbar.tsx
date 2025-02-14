@@ -1,36 +1,33 @@
-import "./AppNavbar.css";
-import { Container, Nav, Navbar } from "react-bootstrap";
-import { NavLink, useLocation } from "react-router-dom";
-import Image from "react-bootstrap/Image";
-import { AuthToken } from "tweeter-shared";
-import useToastListener from "../toaster/ToastListenerHook";
-import useUserInfo from "../userInfo/UseUserInfo";
+import './AppNavbar.css';
+import { Container, Nav, Navbar } from 'react-bootstrap';
+import { NavLink, useLocation } from 'react-router-dom';
+import Image from 'react-bootstrap/Image';
+import useToastListener from '../toaster/ToastListenerHook';
+import useUserInfo from '../userInfo/UseUserInfo';
+import {
+  AppNavbarView,
+  AppNavbarPresenter,
+} from '../../presenters/AuthenticationPresenters/AppNavbarPresenter';
 
-const AppNavbar = () => {
+interface Props {
+  presenterGenerator: (view: AppNavbarView) => AppNavbarPresenter;
+}
+
+const AppNavbar = (props: Props) => {
   const location = useLocation();
   const { authToken, clearUserInfo } = useUserInfo();
   const { displayInfoMessage, displayErrorMessage, clearLastInfoMessage } =
     useToastListener();
 
-  const logOut = async () => {
-    displayInfoMessage("Logging Out...", 0);
-
-    try {
-      await logout(authToken!);
-
-      clearLastInfoMessage();
-      clearUserInfo();
-    } catch (error) {
-      displayErrorMessage(
-        `Failed to log user out because of exception: ${error}`
-      );
-    }
+  const listener: AppNavbarView = {
+    authToken: authToken,
+    clearUserInfo: clearUserInfo,
+    displayInfoMessage: displayInfoMessage,
+    displayErrorMessage: displayErrorMessage,
+    clearLastInfoMessage: clearLastInfoMessage,
   };
 
-  const logout = async (authToken: AuthToken): Promise<void> => {
-    // Pause so we can see the logging out message. Delete when the call to the server is implemented.
-    await new Promise((res) => setTimeout(res, 1000));
-  };
+  const presenter = props.presenterGenerator(listener);
 
   return (
     <Navbar
@@ -45,7 +42,7 @@ const AppNavbar = () => {
           <div className="d-flex flex-row">
             <div className="p-2">
               <NavLink className="brand-link" to="/">
-                <Image src={"./bird-white-32.png"} alt="" />
+                <Image src={'./bird-white-32.png'} alt="" />
               </NavLink>
             </div>
             <div id="brand-title" className="p-3">
@@ -71,7 +68,11 @@ const AppNavbar = () => {
               <NavLink to="/followers">Followers</NavLink>
             </Nav.Item>
             <Nav.Item>
-              <NavLink id="logout" onClick={logOut} to={location.pathname}>
+              <NavLink
+                id="logout"
+                onClick={presenter.logOut}
+                to={location.pathname}
+              >
                 Logout
               </NavLink>
             </Nav.Item>
@@ -83,3 +84,23 @@ const AppNavbar = () => {
 };
 
 export default AppNavbar;
+
+// const logOut = async () => {
+//   displayInfoMessage("Logging Out...", 0);
+
+//   try {
+//     await logout(authToken!);
+
+//     clearLastInfoMessage();
+//     clearUserInfo();
+//   } catch (error) {
+//     displayErrorMessage(
+//       `Failed to log user out because of exception: ${error}`
+//     );
+//   }
+// };
+
+// const logout = async (authToken: AuthToken): Promise<void> => {
+//   // Pause so we can see the logging out message. Delete when the call to the server is implemented.
+//   await new Promise((res) => setTimeout(res, 1000));
+// };

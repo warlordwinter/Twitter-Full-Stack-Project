@@ -3,9 +3,9 @@ import { useState } from 'react';
 import useToastListener from '../toaster/ToastListenerHook';
 import useUserInfo from '../userInfo/UseUserInfo';
 import {
-  PostStatusView,
   PostStatusPresenter,
-} from '../../presenters/PostStatusPresenter/PostStatusPresenter';
+  PostStatusView,
+} from '../../presenters/PostStatusPresenters/PostStatusPresenter';
 
 interface Props {
   presenterGenerator: (view: PostStatusView) => PostStatusPresenter;
@@ -102,16 +102,6 @@ export default PostStatus;
 //     clearLastInfoMessage();
 //     setIsLoading(false);
 //   }
-// };
-
-// const postStatus = async (
-//   authToken: AuthToken,
-//   newStatus: Status
-// ): Promise<void> => {
-//   // Pause so we can see the logging out message. Remove when connected to the server
-//   await new Promise(f => setTimeout(f, 2000));
-
-//   // TODO: Call the server to post the status
 // };
 
 // const clearPost = (event: React.MouseEvent) => {

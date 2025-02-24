@@ -17,6 +17,7 @@ export class NavigationPresenter {
   constructor(view: NavigationView) {
     this.view = view;
     this.userService = new UserService();
+    this.navigateToUser = this.navigateToUser.bind(this);
   }
 
   public async navigateToUser(event: React.MouseEvent): Promise<void> {

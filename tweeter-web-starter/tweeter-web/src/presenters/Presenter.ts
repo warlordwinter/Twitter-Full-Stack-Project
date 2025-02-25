@@ -14,14 +14,14 @@ export interface AuthView extends View {
     remember: boolean
   ) => void;
 }
-export class Presenter<T extends View> {
-  private _view: T;
+export class Presenter<V extends View> {
+  private _view: V;
 
-  protected constructor(view: T) {
+  protected constructor(view: V) {
     this._view = view;
   }
 
-  protected get view() {
+  protected get view(): V {
     return this._view;
   }
 

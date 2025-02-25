@@ -24,4 +24,31 @@ export class Presenter<T extends View> {
   protected get view() {
     return this._view;
   }
+
+  protected async doFailureReportingOperation(
+    operation: () => Promise<void>,
+    operationDescription: string
+  ) {
+    try {
+      operation();
+    } catch (error) {
+      this.view.displayErrorMessage(
+        `Failed to ${operationDescription} because of exception: ${error}`
+      );
+    }
+  }
+
+  // protected async tryCatchFinallyReportingOperation(
+  //   operation: () => Promise<void>,
+  //   operationDescription: string
+  // ) {
+  //   try {
+  //     operation();
+  //   } catch (error) {
+  //     this.view.displayErrorMessage(
+  //       `Failed to ${operationDescription} because of exception: ${error}`
+  //     );
+  //   } finally {
+  //     this.view.setIsLoading(false);
+  // }
 }

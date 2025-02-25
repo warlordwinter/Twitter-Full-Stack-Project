@@ -1,11 +1,11 @@
 import { AuthToken, User } from 'tweeter-shared';
 import { UserService } from '../../model/service/UserService';
+import { View } from '../Presenter';
 
-export interface NavigationView {
+export interface NavigationView extends View {
   extractAlias: (value: string) => string;
   getUser: (authToken: AuthToken, alias: string) => Promise<User | null>;
   setDisplayedUser: (user: User) => void;
-  displayErrorMessage: (message: string, bootstrapClasses?: string) => void;
   currentUser: User | null;
   authToken: AuthToken | null;
 }

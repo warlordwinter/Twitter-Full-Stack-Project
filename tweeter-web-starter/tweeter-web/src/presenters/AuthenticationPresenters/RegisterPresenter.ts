@@ -1,7 +1,7 @@
 import { AuthenticationService } from '../../model/service/AuthenticationService';
 import { ChangeEvent } from 'react';
 import { Buffer } from 'buffer';
-import { AuthView } from './AuthPresenter';
+import { AuthView } from '../Presenter';
 
 export interface RegisterView extends AuthView {
   setImageBytes: React.Dispatch<React.SetStateAction<Uint8Array>>;

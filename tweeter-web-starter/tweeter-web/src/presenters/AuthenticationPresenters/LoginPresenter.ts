@@ -1,5 +1,5 @@
 import { AuthenticationService } from '../../model/service/AuthenticationService';
-import { AuthView } from './AuthPresenter';
+import { AuthView } from '../Presenter';
 
 export interface LoginView extends AuthView {}
 export class LoginPresenter {

@@ -1,8 +1,9 @@
 import { AuthToken } from 'tweeter-shared';
-import { AuthenticationService } from '../../model/service/AuthenticationService';
-import { AuthView, Presenter } from '../Presenter';
+import { AuthParentPresenter } from './AuthParentPresenter';
+import { AuthView } from './AuthPresenter';
 
 export interface AppNavbarView extends AuthView {
+  authToken: AuthToken | null;
   clearUserInfo: () => void;
   displayInfoMessage: (
     message: string,
@@ -10,20 +11,16 @@ export interface AppNavbarView extends AuthView {
     bootstrapClasses?: string
   ) => void;
   clearLastInfoMessage: () => void;
-  authToken: AuthToken | null;
 }
-export class AppNavbarPresenter extends Presenter<AppNavbarView> {
-  public authService: AuthenticationService;
-
-  constructor(view: AppNavbarView) {
-    super(view);
-    this.authService = new AuthenticationService();
+export class AppNavbarPresenter extends AuthParentPresenter<AppNavbarView> {
+  protected getItemDescription(): string {
+    return 'log user out';
   }
 
   public logOut = async () => {
     this.view.displayInfoMessage('Logging Out...', 0);
-    this.doFailureReportingOperation(async () => {
-      await this.authService.logout(this.view.authToken!);
+    this.tryCatchFinallyReportingOperation(async () => {
+      await this._service.logout(this.view.authToken!);
       this.view.clearLastInfoMessage();
       this.view.clearUserInfo();
     }, 'log user out');

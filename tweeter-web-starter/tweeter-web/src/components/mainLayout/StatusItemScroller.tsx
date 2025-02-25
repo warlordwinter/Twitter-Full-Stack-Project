@@ -1,13 +1,13 @@
-import { Status } from "tweeter-shared";
-import { useState, useEffect } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
-import useToastListener from "../toaster/ToastListenerHook";
-import StatusItem from "../statusItem/StatusItem";
-import useUserInfo from "../userInfo/UseUserInfo";
+import { Status } from 'tweeter-shared';
+import { useState, useEffect } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import useToastListener from '../toaster/ToastListenerHook';
+import StatusItem from '../statusItem/StatusItem';
+import useUserInfo from '../userInfo/UseUserInfo';
 import {
   StatusItemPresenter,
   StatusItemView,
-} from "../../presenters/StatusItemPresenter/StatusItemPresenter";
+} from '../../presenters/StatusItemPresenter/StatusItemPresenter';
 
 interface Props {
   presenterGenerator: (view: StatusItemView) => StatusItemPresenter;
@@ -55,7 +55,7 @@ const StatusItemScroller = (props: Props) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const loadMoreItems = async () => {
-    presenter.loadMoreFeedStory(authToken!, displayedUser!.alias);
+    await presenter.loadMoreItems(authToken!, displayedUser!.alias);
     setChangedDisplayedUser(false);
   };
 

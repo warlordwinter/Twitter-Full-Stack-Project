@@ -1,7 +1,7 @@
-import { AuthenticationService } from '../../model/service/AuthenticationService';
 import { ChangeEvent } from 'react';
 import { Buffer } from 'buffer';
-import { AuthView } from '../Presenter';
+import { AuthView } from './AuthPresenter';
+import { AuthParentPresenter } from './AuthParentPresenter';
 
 export interface RegisterView extends AuthView {
   setImageBytes: React.Dispatch<React.SetStateAction<Uint8Array>>;
@@ -9,15 +9,7 @@ export interface RegisterView extends AuthView {
   setImageFileExtension: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export class RegisterPresenter {
-  public view: RegisterView;
-  public registerService: AuthenticationService;
-
-  constructor(view: RegisterView) {
-    this.view = view;
-    this.registerService = new AuthenticationService();
-  }
-
+export class RegisterPresenter extends AuthParentPresenter<RegisterView> {
   public async doRegister(
     firstName: string,
     lastName: string,
@@ -27,27 +19,21 @@ export class RegisterPresenter {
     imageBytes: Uint8Array,
     imageFileExtension: string
   ) {
-    try {
-      this.view.setIsLoading(true);
-
-      const [user, authToken] = await this.registerService.register(
-        firstName,
-        lastName,
-        alias,
-        password,
-        imageBytes,
-        imageFileExtension
-      );
-
-      this.view.updateUserInfo(user, user, authToken, rememberMe);
-      this.view.navigate('/');
-    } catch (error) {
-      this.view.displayErrorMessage(
-        `Failed to register user because of exception: ${error}`
-      );
-    } finally {
-      this.view.setIsLoading(false);
-    }
+    this.authOperation(
+      () =>
+        this.service.register(
+          firstName,
+          lastName,
+          alias,
+          password,
+          imageBytes,
+          imageFileExtension
+        ),
+      rememberMe
+    );
+  }
+  protected getItemDescription(): string {
+    return 'register user';
   }
 
   public handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +49,6 @@ export class RegisterPresenter {
       reader.onload = (event: ProgressEvent<FileReader>) => {
         const imageStringBase64 = event.target?.result as string;
 
-        // Remove unnecessary file metadata from the start of the string.
         const imageStringBase64BufferContents =
           imageStringBase64.split('base64,')[1];
 
@@ -76,7 +61,6 @@ export class RegisterPresenter {
       };
       reader.readAsDataURL(file);
 
-      // Set image file extension (and move to a separate method)
       const fileExtension = this.getFileExtension(file);
       if (fileExtension) {
         this.view.setImageFileExtension(fileExtension);

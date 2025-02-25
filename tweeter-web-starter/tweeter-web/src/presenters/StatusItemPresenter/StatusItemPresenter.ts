@@ -14,7 +14,7 @@ export abstract class StatusItemPresenter extends PagedItemPresenter<
   Status,
   StatusService
 > {
-  protected constructor(view: StatusItemView) {
+  public constructor(view: StatusItemView) {
     super(view);
   }
   protected createService(): StatusService {

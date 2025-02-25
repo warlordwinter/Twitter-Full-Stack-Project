@@ -1,6 +1,6 @@
 import './AppNavbar.css';
 import { Container, Nav, Navbar } from 'react-bootstrap';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Image from 'react-bootstrap/Image';
 import useToastListener from '../toaster/ToastListenerHook';
 import useUserInfo from '../userInfo/UseUserInfo';
@@ -8,6 +8,7 @@ import {
   AppNavbarView,
   AppNavbarPresenter,
 } from '../../presenters/AuthenticationPresenters/AppNavbarPresenter';
+import { SetStateAction } from 'react';
 
 interface Props {
   presenterGenerator: (view: AppNavbarView) => AppNavbarPresenter;
@@ -15,9 +16,11 @@ interface Props {
 
 const AppNavbar = (props: Props) => {
   const location = useLocation();
-  const { authToken, clearUserInfo } = useUserInfo();
+  const navigate = useNavigate();
+  const { authToken, clearUserInfo, updateUserInfo } = useUserInfo();
   const { displayInfoMessage, displayErrorMessage, clearLastInfoMessage } =
     useToastListener();
+  const setIsLoading: React.Dispatch<SetStateAction<boolean>> = () => {};
 
   const listener: AppNavbarView = {
     authToken: authToken,
@@ -25,6 +28,9 @@ const AppNavbar = (props: Props) => {
     displayInfoMessage: displayInfoMessage,
     displayErrorMessage: displayErrorMessage,
     clearLastInfoMessage: clearLastInfoMessage,
+    setIsLoading: setIsLoading,
+    navigate: navigate,
+    updateUserInfo: updateUserInfo,
   };
 
   const presenter = props.presenterGenerator(listener);

@@ -1,6 +1,5 @@
 import { AuthToken } from 'tweeter-shared';
 import { Presenter, View } from './Presenter';
-import { PAGE_SIZE } from './UserItemPresenter/UserItemPresenter';
 
 export interface PagedItemView<T> extends View {
   addItems: (newItems: T[]) => void;
@@ -9,13 +8,9 @@ export interface PagedItemView<T> extends View {
 export abstract class PagedItemPresenter<T, U> extends Presenter<
   PagedItemView<T>
 > {
-  protected _service: U;
+  public _service: U;
   private _hasMoreItems: boolean = true;
   private _lastItem: T | null = null;
-
-  protected get service() {
-    return this._service;
-  }
 
   public constructor(view: PagedItemView<T>) {
     super(view);
@@ -23,6 +18,10 @@ export abstract class PagedItemPresenter<T, U> extends Presenter<
   }
 
   protected abstract createService(): U;
+
+  protected get service() {
+    return this._service;
+  }
 
   public get hasMoreItems() {
     return this._hasMoreItems;

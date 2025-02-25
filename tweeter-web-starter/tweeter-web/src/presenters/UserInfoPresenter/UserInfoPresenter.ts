@@ -47,59 +47,6 @@ export class UserInfoPresenter {
       );
     }
   }
-  // public async followDisplayedUser (
-  //   event: React.MouseEvent
-  // ): Promise<void> {
-  //   event.preventDefault();
-
-  //   try {
-  //     this.view.setIsLoading(true);
-  //     this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
-
-  //     const [followerCount, followeeCount] = await this.userService.follow(
-  //       authToken!,
-  //       displayedUser!
-  //     );
-
-  //     this.view.setIsFollower(true);
-  //     this.view.setFollowerCount(followerCount);
-  //     this.view.setFolloweeCount(followeeCount);
-  //   } catch (error) {
-  //     this.view.displayErrorMessage(
-  //       `Failed to follow user because of exception: ${error}`
-  //     );
-  //   } finally {
-  //     this.view.clearLastInfoMessage();
-  //     this.view.setIsLoading(false);
-  //   }
-  // };
-
-  // public async unfollowDisplayedUser (
-  //   event: React.MouseEvent
-  // ): Promise<void> {
-  //   event.preventDefault();
-
-  //   try {
-  //     this.view.setIsLoading(true);
-  //     this.view.displayInfoMessage(`Unfollowing ${displayedUser!.name}...`, 0);
-
-  //     const [followerCount, followeeCount] = await this.userService.unfollow(
-  //       authToken!,
-  //       displayedUser!
-  //     );
-
-  //     this.view.setIsFollower(false);
-  //     this.view.setFollowerCount(followerCount);
-  //     this.view.setFolloweeCount(followeeCount);
-  //   } catch (error) {
-  //     this.view.displayErrorMessage(
-  //       `Failed to unfollow user because of exception: ${error}`
-  //     );
-  //   } finally {
-  //     this.view.clearLastInfoMessage();
-  //     this.view.setIsLoading(false);
-  //   }
-  // };
 
   public async setIsFollowerStatus(
     authToken: AuthToken,
@@ -125,3 +72,57 @@ export class UserInfoPresenter {
     }
   }
 }
+
+// public async followDisplayedUser (
+//   event: React.MouseEvent
+// ): Promise<void> {
+//   event.preventDefault();
+
+//   try {
+//     this.view.setIsLoading(true);
+//     this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
+
+//     const [followerCount, followeeCount] = await this.userService.follow(
+//       authToken!,
+//       displayedUser!
+//     );
+
+//     this.view.setIsFollower(true);
+//     this.view.setFollowerCount(followerCount);
+//     this.view.setFolloweeCount(followeeCount);
+//   } catch (error) {
+//     this.view.displayErrorMessage(
+//       `Failed to follow user because of exception: ${error}`
+//     );
+//   } finally {
+//     this.view.clearLastInfoMessage();
+//     this.view.setIsLoading(false);
+//   }
+// };
+
+// public async unfollowDisplayedUser (
+//   event: React.MouseEvent
+// ): Promise<void> {
+//   event.preventDefault();
+
+//   try {
+//     this.view.setIsLoading(true);
+//     this.view.displayInfoMessage(`Unfollowing ${displayedUser!.name}...`, 0);
+
+//     const [followerCount, followeeCount] = await this.userService.unfollow(
+//       authToken!,
+//       displayedUser!
+//     );
+
+//     this.view.setIsFollower(false);
+//     this.view.setFollowerCount(followerCount);
+//     this.view.setFolloweeCount(followeeCount);
+//   } catch (error) {
+//     this.view.displayErrorMessage(
+//       `Failed to unfollow user because of exception: ${error}`
+//     );
+//   } finally {
+//     this.view.clearLastInfoMessage();
+//     this.view.setIsLoading(false);
+//   }
+// };

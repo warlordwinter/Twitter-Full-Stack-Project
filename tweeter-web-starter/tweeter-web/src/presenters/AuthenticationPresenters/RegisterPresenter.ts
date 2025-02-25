@@ -1,19 +1,9 @@
-import { NavigateFunction } from 'react-router-dom';
 import { AuthenticationService } from '../../model/service/AuthenticationService';
-import { User, AuthToken } from 'tweeter-shared';
 import { ChangeEvent } from 'react';
 import { Buffer } from 'buffer';
+import { AuthView } from './AuthPresenter';
 
-export interface RegisterView {
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  navigate: NavigateFunction;
-  displayErrorMessage: (message: string) => void;
-  updateUserInfo: (
-    currentUser: User,
-    displayedUser: User | null,
-    authToken: AuthToken,
-    remember: boolean
-  ) => void;
+export interface RegisterView extends AuthView {
   setImageBytes: React.Dispatch<React.SetStateAction<Uint8Array>>;
   setImageUrl: React.Dispatch<React.SetStateAction<string>>;
   setImageFileExtension: React.Dispatch<React.SetStateAction<string>>;

@@ -1,43 +1,41 @@
-import { AuthToken, Status } from "tweeter-shared";
+import { AuthToken, Status } from 'tweeter-shared';
+import { View, Presenter } from '../Presenter';
+//4:46 duplication and generics
 
-export interface StatusItemView{
-    addItems: (newItems: Status[]) => void
-    displayErrorMessage: (message:string) => void
+export interface StatusItemView extends View {
+  addItems: (newItems: Status[]) => void;
 }
 
-export abstract class StatusItemPresenter{
-    private _hasMoreItems = true;
-    private _lastItem: Status | null = null;
-    private _view: StatusItemView;
+export abstract class StatusItemPresenter extends Presenter<StatusItemView> {
+  private _hasMoreItems = true;
+  private _lastItem: Status | null = null;
 
-    protected constructor(view: StatusItemView){
-        this._view = view;
-    }
+  protected constructor(view: StatusItemView) {
+    super(view);
+  }
 
-    protected get view() {
-        return this._view
-    }
+  public get hasMoreItems() {
+    return this._hasMoreItems;
+  }
 
-    public get hasMoreItems(){
-        return this._hasMoreItems
-    }
+  protected set hasMoreItems(value: boolean) {
+    this._hasMoreItems = value;
+  }
 
-    protected set hasMoreItems(value: boolean){
-        this._hasMoreItems = value;
-    }
+  protected get lastItem() {
+    return this._lastItem;
+  }
 
-    protected get lastItem(){
-        return this._lastItem
-    }
+  protected set lastItem(value: Status | null) {
+    this._lastItem = value;
+  }
+  reset() {
+    this.lastItem = null;
+    this._hasMoreItems = true;
+  }
 
-    protected set lastItem(value: Status|null){
-        this._lastItem = value;
-    }
-    reset() {
-        this.lastItem = null;
-        this._hasMoreItems = true;
-    }
-    
-    public abstract loadMoreFeedStory(authToken: AuthToken, userAlias: string): void;
-
+  public abstract loadMoreFeedStory(
+    authToken: AuthToken,
+    userAlias: string
+  ): void;
 }

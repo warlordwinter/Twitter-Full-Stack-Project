@@ -1,21 +1,17 @@
-import { AuthToken, User } from "tweeter-shared";
+import { AuthToken, User } from 'tweeter-shared';
+import { Presenter, View } from '../Presenter';
+//4:46 duplication and generics
 
-export interface UserItemView {
+export interface UserItemView extends View {
   addItems: (newItems: User[]) => void;
-  displayErrorMessage: (message: string) => void;
 }
 
-export abstract class UserItemPresenter {
+export abstract class UserItemPresenter extends Presenter<UserItemView> {
   private _hasMoreItems = true;
   private _lastItem: User | null = null;
-  private _view: UserItemView;
 
   protected constructor(view: UserItemView) {
-    this._view = view;
-  }
-
-  protected get view() {
-    return this._view;
+    super(view);
   }
 
   public get hasMoreItems() {
@@ -33,6 +29,7 @@ export abstract class UserItemPresenter {
   protected set lastItem(value: User | null) {
     this._lastItem = value;
   }
+
   reset() {
     this.lastItem = null;
     this._hasMoreItems = true;

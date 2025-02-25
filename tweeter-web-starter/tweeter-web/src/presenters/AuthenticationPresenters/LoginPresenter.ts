@@ -1,20 +1,7 @@
-import { NavigateFunction } from 'react-router-dom';
 import { AuthenticationService } from '../../model/service/AuthenticationService';
-import { AuthToken } from 'tweeter-shared/dist/model/domain/AuthToken';
-import { User } from 'tweeter-shared';
+import { AuthView } from './AuthPresenter';
 
-export interface LoginView {
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  displayErrorMessage: (message: string) => void;
-  navigate: NavigateFunction;
-  updateUserInfo: (
-    currentUser: User,
-    displayedUser: User | null,
-    authToken: AuthToken,
-    remember: boolean
-  ) => void;
-}
-
+export interface LoginView extends AuthView {}
 export class LoginPresenter {
   public view: LoginView;
   public loginService: AuthenticationService;

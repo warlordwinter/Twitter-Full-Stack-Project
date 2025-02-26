@@ -7,7 +7,7 @@ import { AuthPresenter, AuthView } from './AuthPresenter';
 export abstract class AuthParentPresenter<
   T extends AuthView
 > extends AuthPresenter<T> {
-  protected _service: AuthenticationService;
+  public _service: AuthenticationService;
 
   public constructor(view: T) {
     super(view);

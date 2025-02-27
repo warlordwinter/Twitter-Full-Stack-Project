@@ -1,0 +1,7 @@
+{
+  "jest.pathToJest": "npx jest",
+  "jest.autoRun": {
+    "watch": true,
+    "onSave": "test-file"
+  }
+}

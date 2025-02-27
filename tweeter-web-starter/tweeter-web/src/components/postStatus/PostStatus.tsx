@@ -5,7 +5,7 @@ import useUserInfo from '../userInfo/UseUserInfo';
 import {
   PostStatusPresenter,
   PostStatusView,
-} from '../../presenters/PostStatusPresenters/PostStatusPresenter';
+} from '../../presenters/PostStatusPresentersFolder/PostStatusPresenter';
 
 interface Props {
   presenterGenerator: (view: PostStatusView) => PostStatusPresenter;

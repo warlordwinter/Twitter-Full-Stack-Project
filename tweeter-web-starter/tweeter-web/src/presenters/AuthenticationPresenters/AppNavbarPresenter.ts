@@ -19,10 +19,11 @@ export class AppNavbarPresenter extends AuthParentPresenter<AppNavbarView> {
 
   public logOut = async (authToken: AuthToken) => {
     this.view.displayInfoMessage('Logging Out...', 0);
-    this.tryCatchFinallyReportingOperation(async () => {
+    await this.tryCatchFinallyReportingOperation(async () => {
       await this._service.logout(authToken);
       this.view.clearLastInfoMessage();
       this.view.clearUserInfo();
+      this.view.navigate('/login');
     }, 'log user out');
   };
 }

@@ -37,6 +37,7 @@
     ]
   },
   "jest": {
+    "rootDir": "./",
     "verbose": true,
     "testEnvironment": "jsdom",
     "moduleNameMapper": {

@@ -4,7 +4,7 @@ import AppNavbar from '../appNavbar/AppNavbar';
 import PostStatus from '../postStatus/PostStatus';
 import UserInfo from '../userInfo/UserInfo';
 import { UserInfoPresenter } from '../../presenters/UserInfoPresenter/UserInfoPresenter';
-import { PostStatusPresenter } from '../../presenters/PostStatusPresenters/PostStatusPresenter';
+import { PostStatusPresenter } from '../../presenters/PostStatusPresentersFolder/PostStatusPresenter';
 import { AppNavbarPresenter } from '../../presenters/AuthenticationPresenters/AppNavbarPresenter';
 
 const MainLayout = () => {

@@ -29,7 +29,8 @@
     "serve": "vite preview",
     "reload": "npm run build && npm run serve",
     "test": "jest",
-    "login": "jest test/components/authentication/login/Login.test.tsx"
+    "login": "jest test/components/authentication/login/Login.test.tsx",
+    "post": "jest test/components/postStatus/PostStatus.test.tsx"
   },
   "eslintConfig": {
     "extends": [

@@ -37,6 +37,7 @@ const PostStatus = (props: Props) => {
           <textarea
             className="form-control"
             id="postStatusTextArea"
+            aria-label="textarea"
             rows={10}
             placeholder="What's on your mind?"
             value={post}
@@ -48,6 +49,7 @@ const PostStatus = (props: Props) => {
         <div className="form-group">
           <button
             id="postStatusButton"
+            aria-label="PostStatusButton"
             className="btn btn-md btn-primary me-1"
             type="button"
             disabled={presenter.checkButtonStatus()}
@@ -67,6 +69,7 @@ const PostStatus = (props: Props) => {
           <button
             id="clearStatusButton"
             className="btn btn-md btn-secondary"
+            aria-label="ClearStatusButton"
             type="button"
             disabled={presenter.checkButtonStatus()}
             onClick={event => presenter.clearPost(event)}

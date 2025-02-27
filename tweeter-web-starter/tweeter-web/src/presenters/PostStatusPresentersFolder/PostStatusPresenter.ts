@@ -38,7 +38,9 @@ export class PostStatusPresenter {
       this.view.displayInfoMessage('Status posted!', 2000);
     } catch (error) {
       this.view.displayErrorMessage(
-        `Failed to post the status because of exception: ${error}`
+        `Failed to post the status because of exception: ${
+          (error as Error).message
+        }`
       );
     } finally {
       this.view.clearLastInfoMessage();

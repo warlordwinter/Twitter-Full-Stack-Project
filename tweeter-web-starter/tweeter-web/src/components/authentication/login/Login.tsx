@@ -12,7 +12,7 @@ import {
 } from '../../../presenters/AuthenticationPresenters/LoginPresenter';
 //post status and logout
 interface Props {
-  presenterGenerator: (view: LoginView) => LoginPresenter;
+  presenterGenerator?: (view: LoginView) => LoginPresenter;
   originalUrl?: string;
 }
 
@@ -35,7 +35,7 @@ const Login = (props: Props) => {
     navigate: navigate,
     updateUserInfo: updateUserInfo,
   };
-  const [presenter] = useState(props.presenterGenerator(listener));
+  const [presenter] = useState(props.presenterGenerator!(listener));
 
   const loginOnEnter = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key == 'Enter' && !checkSubmitButtonStatus()) {

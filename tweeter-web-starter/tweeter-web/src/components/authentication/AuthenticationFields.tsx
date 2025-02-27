@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 interface Props {
   passedInFunction: (event: React.KeyboardEvent<HTMLElement>) => void;
@@ -17,10 +17,11 @@ const AuthenticationFields = (props: Props) => {
           className="form-control"
           size={50}
           id="aliasInput"
+          aria-label="alias"
           placeholder="name@example.com"
           value={props.alias}
           onKeyDown={props.passedInFunction}
-          onChange={(event) => props.setAlias(event.target.value)}
+          onChange={event => props.setAlias(event.target.value)}
         />
         <label htmlFor="aliasInput">Alias</label>
       </div>
@@ -29,10 +30,11 @@ const AuthenticationFields = (props: Props) => {
           type="password"
           className="form-control"
           id="passwordInput"
+          aria-label="password"
           placeholder="Password"
           value={props.password}
           onKeyDown={props.passedInFunction}
-          onChange={(event) => props.setPassword(event.target.value)}
+          onChange={event => props.setPassword(event.target.value)}
         />
         <label htmlFor="passwordInput">Password</label>
       </div>

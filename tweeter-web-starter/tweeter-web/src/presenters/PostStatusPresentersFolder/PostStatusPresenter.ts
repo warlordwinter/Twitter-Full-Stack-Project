@@ -31,9 +31,7 @@ export class PostStatusPresenter {
         this.view.currentUser!,
         Date.now()
       );
-
       await this.postStatusService.postStatus(this.view.authToken!, status);
-
       this.view.setPost('');
       this.view.displayInfoMessage('Status posted!', 2000);
     } catch (error) {

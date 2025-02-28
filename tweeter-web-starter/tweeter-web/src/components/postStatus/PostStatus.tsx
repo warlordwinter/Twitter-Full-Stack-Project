@@ -1,5 +1,5 @@
 import './PostStatus.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useToastListener from '../toaster/ToastListenerHook';
 import useUserInfo from '../userInfo/UseUserInfo';
 import {
@@ -29,6 +29,10 @@ const PostStatus = (props: Props) => {
     currentUser: currentUser,
   };
   const presenter = props.presenterGenerator(listener);
+
+  useEffect(() => {
+    presenter.checkButtonStatus();
+  }, [post]);
 
   return (
     <div className={isLoading ? 'loading' : ''}>

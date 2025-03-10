@@ -66,6 +66,7 @@ describe('PostStatusPresenter', () => {
       mockPostStatusView.displayInfoMessage('Status posted!', 2000)
     ).once();
   });
+
   it('When posting of the status is not successful, the presenter tells the view to display an error message and clear the last info message and does not tell it to clear the post or display a status posted message.', async () => {
     when(mockPostService.postStatus(authToken, newStatus)).thenThrow(
       new Error('an error occurred')

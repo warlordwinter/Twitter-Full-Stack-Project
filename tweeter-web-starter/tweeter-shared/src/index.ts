@@ -14,7 +14,7 @@ export { AuthToken } from './model/domain/AuthToken';
 //
 export type { UserDto } from './model/dto/UserDto';
 export type { StatusDto } from './model/dto/StatusDto';
-
+export type { AuthTokenDto } from './model/dto/AuthTokenDto';
 //
 // Request
 //
@@ -25,6 +25,8 @@ export type { GetFeedRequest } from './model/net/request/GetFeedRequest';
 export type { PostStatusRequest } from './model/net/request/PostStatusRequest';
 export type { FollowRequest } from './model/net/request/FollowRequest';
 export type { UnfollowRequest } from './model/net/request/UnfollowRequest';
+export type { LoginRequest } from './model/net/request/LoginRequest';
+//
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';
@@ -33,6 +35,8 @@ export type { GetIsResponse } from './model/net/response/GetIsResponse';
 export type { GetFeedResponse } from './model/net/response/GetFeedResponse';
 export type { PostStatusResponse } from './model/net/response/PostStatusResponse';
 export type { FollowResponse } from './model/net/response/FollowResponse';
+export type { LoginResponse } from './model/net/response/LoginResponse';
+//
 // Other
 //
 export { FakeData } from './util/FakeData';

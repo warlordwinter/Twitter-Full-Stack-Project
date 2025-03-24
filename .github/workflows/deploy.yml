@@ -124,16 +124,33 @@ jobs:
           # Upload CloudFormation template to S3
           aws s3 cp tweeter-web-starter/tweeter-server/cloudformation.yml s3://${{ env.S3_BUCKET }}/cloudformation.yml
 
-          # Deploy using the S3 template
-          aws cloudformation create-stack \
-            --stack-name tweeter-api \
-            --template-url https://${{ env.S3_BUCKET }}.s3.${{ env.AWS_REGION }}.amazonaws.com/cloudformation.yml \
-            --capabilities CAPABILITY_IAM \
-            --parameters \
-              ParameterKey=S3Bucket,ParameterValue=${{ env.S3_BUCKET }} \
-              ParameterKey=NodejsLayerKey,ParameterValue=nodejs.zip \
-              ParameterKey=LambdasKey,ParameterValue=lambdas.zip \
-              ParameterKey=Timestamp,ParameterValue=$DEPLOY_TIMESTAMP
+          # Check if stack exists
+          if aws cloudformation describe-stacks --stack-name tweeter-api 2>/dev/null; then
+            echo "Stack exists, updating..."
+            aws cloudformation update-stack \
+              --stack-name tweeter-api \
+              --template-url https://${{ env.S3_BUCKET }}.s3.${{ env.AWS_REGION }}.amazonaws.com/cloudformation.yml \
+              --capabilities CAPABILITY_IAM \
+              --parameters \
+                ParameterKey=S3Bucket,ParameterValue=${{ env.S3_BUCKET }} \
+                ParameterKey=NodejsLayerKey,ParameterValue=nodejs.zip \
+                ParameterKey=LambdasKey,ParameterValue=lambdas.zip \
+                ParameterKey=Timestamp,ParameterValue=$DEPLOY_TIMESTAMP
 
-          # Wait for stack creation to complete
-          aws cloudformation wait stack-create-complete --stack-name tweeter-api
+            # Wait for stack update to complete
+            aws cloudformation wait stack-update-complete --stack-name tweeter-api
+          else
+            echo "Stack does not exist, creating..."
+            aws cloudformation create-stack \
+              --stack-name tweeter-api \
+              --template-url https://${{ env.S3_BUCKET }}.s3.${{ env.AWS_REGION }}.amazonaws.com/cloudformation.yml \
+              --capabilities CAPABILITY_IAM \
+              --parameters \
+                ParameterKey=S3Bucket,ParameterValue=${{ env.S3_BUCKET }} \
+                ParameterKey=NodejsLayerKey,ParameterValue=nodejs.zip \
+                ParameterKey=LambdasKey,ParameterValue=lambdas.zip \
+                ParameterKey=Timestamp,ParameterValue=$DEPLOY_TIMESTAMP
+
+            # Wait for stack creation to complete
+            aws cloudformation wait stack-create-complete --stack-name tweeter-api
+          fi

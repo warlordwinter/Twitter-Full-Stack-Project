@@ -1,0 +1,129 @@
+name: Deploy Lambda Functions
+
+on:
+  push:
+    branches:
+      - main
+      - Milestone3A
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-west-2
+  S3_BUCKET: tweeterstorage
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd tweeter-shared && npm install
+          cd ../tweeter-server && npm install
+
+      - name: Build shared package
+        run: |
+          cd tweeter-shared
+          npm run build
+
+          # Debug - show build output
+          echo "Shared package build output:"
+          ls -R dist/
+
+      - name: Build server package
+        run: |
+          cd tweeter-server
+          npm run build
+
+          # Debug - show build output
+          echo "Server build output:"
+          ls -R dist/
+
+      - name: Prepare Lambda Layer
+        run: |
+          # Create a fresh nodejs directory
+          rm -rf nodejs
+          mkdir -p nodejs
+
+          # Copy node_modules from tweeter-server
+          cp -r tweeter-server/node_modules nodejs/
+
+          # Remove any existing tweeter-shared from node_modules and copy the new one
+          rm -rf nodejs/node_modules/tweeter-shared
+          cp -r tweeter-shared nodejs/node_modules/
+
+          # Debug - show directory structure before zipping
+          echo "Directory structure before zipping:"
+          ls -R nodejs
+
+          # Create the layer zip
+          zip -r nodejs.zip nodejs
+
+          # Debug - show contents
+          echo "Contents of nodejs.zip:"
+          unzip -l nodejs.zip
+
+      - name: Package Lambda Functions
+        run: |
+          # Generate timestamp for unique zip names
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          LAMBDA_ZIP="lambdas-${TIMESTAMP}.zip"
+
+          # Show what we're about to zip
+          echo "Contents of tweeter-server/dist directory:"
+          ls -R tweeter-server/dist
+
+          # Create zip with contents of dist (without including dist directory)
+          cd tweeter-server/dist
+          zip -r ../../$LAMBDA_ZIP *
+          cd ../..
+
+          # Show what was zipped
+          echo "Contents of $LAMBDA_ZIP:"
+          unzip -l $LAMBDA_ZIP
+
+          # Upload to S3 with versioning enabled
+          aws s3api put-bucket-versioning --bucket ${{ env.S3_BUCKET }} --versioning-configuration Status=Enabled
+
+          # Upload files and capture version IDs
+          LAMBDA_VERSION=$(aws s3api put-object --bucket ${{ env.S3_BUCKET }} --key lambdas.zip --body $LAMBDA_ZIP --query 'VersionId' --output text)
+          LAYER_VERSION=$(aws s3api put-object --bucket ${{ env.S3_BUCKET }} --key nodejs.zip --body nodejs.zip --query 'VersionId' --output text)
+
+          # Store the versions for CloudFormation
+          echo "DEPLOY_TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "LAMBDA_VERSION=${LAMBDA_VERSION}" >> $GITHUB_ENV
+          echo "LAYER_VERSION=${LAYER_VERSION}" >> $GITHUB_ENV
+
+      - name: Deploy CloudFormation stack
+        run: |
+          # Use the versions for both Layer and Lambda
+          echo "Using timestamp: $DEPLOY_TIMESTAMP"
+          echo "Lambda version: $LAMBDA_VERSION"
+          echo "Layer version: $LAYER_VERSION"
+
+          aws cloudformation deploy \
+            --template-file cloudformation.yml \
+            --stack-name tweeter-api \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              S3Bucket=${{ env.S3_BUCKET }} \
+              NodejsLayerKey=nodejs.zip \
+              LambdasKey=lambdas.zip \
+              Timestamp=$DEPLOY_TIMESTAMP

@@ -14,5 +14,8 @@
     "tweeter-shared": "file:../tweeter-shared",
     "date-fns": "^3.3.1",
     "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
   }
 }

@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd tweeter-web-starter/tweeter-shared && npm install && npm install -D rimraf
+          cd tweeter-web-starter/tweeter-shared && npm install
           cd ../tweeter-server && npm install
 
       - name: Build shared package

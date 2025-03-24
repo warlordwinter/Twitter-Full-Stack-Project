@@ -92,8 +92,8 @@ jobs:
 
           # Create zip with contents of dist (without including dist directory)
           cd tweeter-web-starter/tweeter-server/dist
-          zip -r ../../$LAMBDA_ZIP *
-          cd ../../
+          zip -r ../../../$LAMBDA_ZIP *
+          cd ../../../
 
           # Show what was zipped
           echo "Contents of $LAMBDA_ZIP:"

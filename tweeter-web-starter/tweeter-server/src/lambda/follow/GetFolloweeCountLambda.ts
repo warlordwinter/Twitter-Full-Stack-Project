@@ -8,7 +8,7 @@ export const handler = async (
   const userService = new UserService(); // from this request call and create a userservice.
   const count = await userService.getFolloweeCount(
     requests.token,
-    requests.userDto
+    requests.user
   );
   return {
     success: true,

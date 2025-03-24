@@ -121,8 +121,12 @@ jobs:
           echo "Lambda version: $LAMBDA_VERSION"
           echo "Layer version: $LAYER_VERSION"
 
+          # Upload CloudFormation template to S3
+          aws s3 cp tweeter-web-starter/tweeter-server/cloudformation.yml s3://${{ env.S3_BUCKET }}/cloudformation.yml
+
+          # Deploy using the S3 template
           aws cloudformation deploy \
-            --template-file tweeter-web-starter/tweeter-server/cloudformation.yml \
+            --template-file s3://${{ env.S3_BUCKET }}/cloudformation.yml \
             --stack-name tweeter-api \
             --capabilities CAPABILITY_IAM \
             --parameter-overrides \

@@ -9,7 +9,7 @@ on:
 
 env:
   AWS_REGION: us-west-2
-  S3_BUCKET: tweeterstorage
+  S3_BUCKET: wiley-tweeter-storage
 
 permissions:
   id-token: write

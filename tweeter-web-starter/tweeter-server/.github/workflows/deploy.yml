@@ -26,7 +26,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -35,12 +35,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd tweeter-shared && npm install
+          cd tweeter-web-starter/tweeter-shared && npm install
           cd ../tweeter-server && npm install
 
       - name: Build shared package
         run: |
-          cd tweeter-shared
+          cd tweeter-web-starter/tweeter-shared
           npm run build
 
           # Debug - show build output
@@ -49,7 +49,7 @@ jobs:
 
       - name: Build server package
         run: |
-          cd tweeter-server
+          cd tweeter-web-starter/tweeter-server
           npm run build
 
           # Debug - show build output
@@ -63,11 +63,11 @@ jobs:
           mkdir -p nodejs
 
           # Copy node_modules from tweeter-server
-          cp -r tweeter-server/node_modules nodejs/
+          cp -r tweeter-web-starter/tweeter-server/node_modules nodejs/
 
           # Remove any existing tweeter-shared from node_modules and copy the new one
           rm -rf nodejs/node_modules/tweeter-shared
-          cp -r tweeter-shared nodejs/node_modules/
+          cp -r tweeter-web-starter/tweeter-shared nodejs/node_modules/
 
           # Debug - show directory structure before zipping
           echo "Directory structure before zipping:"
@@ -88,12 +88,12 @@ jobs:
 
           # Show what we're about to zip
           echo "Contents of tweeter-server/dist directory:"
-          ls -R tweeter-server/dist
+          ls -R tweeter-web-starter/tweeter-server/dist
 
           # Create zip with contents of dist (without including dist directory)
-          cd tweeter-server/dist
-          zip -r ../../$LAMBDA_ZIP *
-          cd ../..
+          cd tweeter-web-starter/tweeter-server/dist
+          zip -r ../../../$LAMBDA_ZIP *
+          cd ../../../
 
           # Show what was zipped
           echo "Contents of $LAMBDA_ZIP:"
@@ -119,7 +119,7 @@ jobs:
           echo "Layer version: $LAYER_VERSION"
 
           aws cloudformation deploy \
-            --template-file cloudformation.yml \
+            --template-file tweeter-web-starter/tweeter-server/cloudformation.yml \
             --stack-name tweeter-api \
             --capabilities CAPABILITY_IAM \
             --parameter-overrides \

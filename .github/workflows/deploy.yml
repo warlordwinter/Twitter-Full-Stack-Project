@@ -125,12 +125,15 @@ jobs:
           aws s3 cp tweeter-web-starter/tweeter-server/cloudformation.yml s3://${{ env.S3_BUCKET }}/cloudformation.yml
 
           # Deploy using the S3 template
-          aws cloudformation deploy \
-            --template-url s3://${{ env.S3_BUCKET }}/cloudformation.yml \
+          aws cloudformation create-stack \
             --stack-name tweeter-api \
+            --template-url https://${{ env.S3_BUCKET }}.s3.${{ env.AWS_REGION }}.amazonaws.com/cloudformation.yml \
             --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-              S3Bucket=${{ env.S3_BUCKET }} \
-              NodejsLayerKey=nodejs.zip \
-              LambdasKey=lambdas.zip \
-              Timestamp=$DEPLOY_TIMESTAMP
+            --parameters \
+              ParameterKey=S3Bucket,ParameterValue=${{ env.S3_BUCKET }} \
+              ParameterKey=NodejsLayerKey,ParameterValue=nodejs.zip \
+              ParameterKey=LambdasKey,ParameterValue=lambdas.zip \
+              ParameterKey=Timestamp,ParameterValue=$DEPLOY_TIMESTAMP
+
+          # Wait for stack creation to complete
+          aws cloudformation wait stack-create-complete --stack-name tweeter-api

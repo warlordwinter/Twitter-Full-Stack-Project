@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "Tweeter API Infrastructure"
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Tweeter API Infrastructure'
 
 Parameters:
   S3Bucket:
@@ -39,7 +39,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
@@ -50,12 +50,12 @@ Resources:
       Policies:
         - PolicyName: TweeterLambdaPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - s3:*
-                Resource: "*"
+                Resource: '*'
 
   # API Gateway
   TweeterApi:
@@ -68,7 +68,7 @@ Resources:
 
   # Gateway Responses for CORS
   GatewayResponse4XX:
-    Type: "AWS::ApiGateway::GatewayResponse"
+    Type: 'AWS::ApiGateway::GatewayResponse'
     Properties:
       RestApiId: !Ref TweeterApi
       ResponseType: DEFAULT_4XX
@@ -78,7 +78,7 @@ Resources:
         gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
 
   GatewayResponse5XX:
-    Type: "AWS::ApiGateway::GatewayResponse"
+    Type: 'AWS::ApiGateway::GatewayResponse'
     Properties:
       RestApiId: !Ref TweeterApi
       ResponseType: DEFAULT_5XX
@@ -172,21 +172,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   # OPTIONS method for CORS
   GetFolloweesOptionsMethod:
@@ -296,21 +296,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   GetFolloweeCountOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -429,21 +429,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   # OPTIONS method for CORS for Followers
   GetFollowersOptionsMethod:
@@ -553,21 +553,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   GetFollowerCountOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -676,21 +676,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   GetIsFollowerOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -809,21 +809,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   # OPTIONS method for CORS for Followers
   GetFeedOptionsMethod:
@@ -942,21 +942,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   GetStoryOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -1071,21 +1071,21 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Empty"
+            application/json: 'Empty'
         - StatusCode: 400
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
         - StatusCode: 500
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
           ResponseModels:
-            application/json: "Error"
+            application/json: 'Error'
 
   PostStatusOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -1187,4 +1187,3 @@ Outputs:
   PostStatusEndpoint:
     Description: Post Status API endpoint
     Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/status/post
-

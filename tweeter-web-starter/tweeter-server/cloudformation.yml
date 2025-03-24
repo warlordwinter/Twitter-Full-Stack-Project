@@ -1147,6 +1147,8 @@ Resources:
       - LoginOptionsMethod
       - RegisterMethod
       - RegisterOptionsMethod
+      - LogoutMethod
+      - LogoutOptionsMethod
     Properties:
       Description: Deployment for Tweeter API
       RestApiId: !Ref TweeterApi
@@ -1439,35 +1441,46 @@ Resources:
       Timeout: 30
       MemorySize: 128
 
-  # API Gateway Resources for Register
-  RegisterResource:
+  # Logout Lambda
+  LogoutLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub LogoutLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/authentication/LogoutLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Logout
+  LogoutResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref TweeterApi
       ParentId: !Ref AuthResource
-      PathPart: register
+      PathPart: logout
 
-  RegisterMethod:
+  LogoutMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref TweeterApi
-      ResourceId: !Ref RegisterResource
+      ResourceId: !Ref LogoutResource
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
         Type: AWS
         IntegrationHttpMethod: POST
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterLambda.Arn}/invocations
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LogoutLambda.Arn}/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         RequestTemplates:
           application/json: |
             {
-              "alias": $input.json('$.alias'),
-              "password": $input.json('$.password'),
-              "firstName": $input.json('$.firstName'),
-              "lastName": $input.json('$.lastName'),
-              "userImageBytes": $input.json('$.userImageBytes'),
-              "imageFileExtension": $input.json('$.imageFileExtension')
+              "authToken": $input.json('$.authToken')
             }
         IntegrationResponses:
           - StatusCode: 200
@@ -1480,9 +1493,7 @@ Resources:
                 #set($inputRoot = $input.path('$'))
                 {
                   "success": true,
-                  "message": null,
-                  "user": $inputRoot.user,
-                  "authToken": $inputRoot.authToken
+                  "message": null
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"
@@ -1519,11 +1530,11 @@ Resources:
           ResponseModels:
             application/json: 'Error'
 
-  RegisterOptionsMethod:
+  LogoutOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref TweeterApi
-      ResourceId: !Ref RegisterResource
+      ResourceId: !Ref LogoutResource
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
@@ -1543,13 +1554,13 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
-  RegisterLambdaPermission:
+  LogoutLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref RegisterLambda
+      FunctionName: !Ref LogoutLambda
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/auth/register
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/auth/logout
 
   # API Gateway Resources for Login
   AuthResource:
@@ -1718,3 +1729,7 @@ Outputs:
   RegisterEndpoint:
     Description: Register API endpoint
     Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/auth/register
+
+  LogoutEndpoint:
+    Description: Logout API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/auth/logout

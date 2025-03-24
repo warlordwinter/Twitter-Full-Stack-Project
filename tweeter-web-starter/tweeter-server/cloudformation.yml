@@ -655,7 +655,7 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "value": $inputRoot.value
+                  "isFollower": $inputRoot.isFollower
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

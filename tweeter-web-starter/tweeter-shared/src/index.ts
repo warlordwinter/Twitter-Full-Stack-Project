@@ -24,6 +24,7 @@ export type { GetIsRequest } from './model/net/request/GetIsRequest';
 export type { GetFeedRequest } from './model/net/request/GetFeedRequest';
 export type { PostStatusRequest } from './model/net/request/PostStatusRequest';
 export type { FollowRequest } from './model/net/request/FollowRequest';
+export type { UnfollowRequest } from './model/net/request/UnfollowRequest';
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';

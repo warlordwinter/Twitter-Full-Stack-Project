@@ -1,14 +1,14 @@
 import { UserService } from '../../model/service/UserService';
 import { FollowResponse } from 'tweeter-shared/src/model/net/response/FollowResponse';
-import { FollowRequest } from 'tweeter-shared/src/model/net/request/FollowRequest';
+import { UnfollowRequest } from 'tweeter-shared/src/model/net/request/UnfollowRequest';
 
 export const handler = async (
-  requests: FollowRequest
+  requests: UnfollowRequest
 ): Promise<FollowResponse> => {
   const userService = new UserService();
   const [followerCount, followeeCount] = await userService.unfollow(
     requests.token,
-    requests.userToFollow
+    requests.userToUnfollow
   );
   return {
     success: true,

@@ -1,12 +1,18 @@
 import { UserService } from '../../model/service/UserService';
-import { PagedUserItemRequest } from 'tweeter-shared/src/model/net/request/GetFolloweeCountRequest';
+import { GetFolloweeCountRequest } from 'tweeter-shared/src/model/net/request/GetFolloweeCountRequest';
+import { GetFolloweeCountResponse } from 'tweeter-shared/src/model/net/response/GetFolloweeCountResponse';
 
 export const handler = async (
-  requests: 
-): Promise<GetFollowResponse> => {
+  requests: GetFolloweeCountRequest
+): Promise<GetFolloweeCountResponse> => {
   const userService = new UserService();
-  const ji = await userService.getFolloweeCount(
+  const count = await userService.getFolloweeCount(
     requests.token,
     requests.userDto
   );
+  return {
+    success: true,
+    message: null,
+    value: count,
+  };
 };

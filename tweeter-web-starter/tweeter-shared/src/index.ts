@@ -13,6 +13,7 @@ export { AuthToken } from './model/domain/AuthToken';
 // Data Transfer Objects (DTOs)
 //
 export type { UserDto } from './model/dto/UserDto';
+export type { StatusDto } from './model/dto/StatusDto';
 
 //
 // Request
@@ -20,12 +21,13 @@ export type { UserDto } from './model/dto/UserDto';
 export type { PagedUserItemRequest } from './model/net/request/PagedUserItemRequest';
 export type { GetCountRequest } from './model/net/request/GetCountRequest';
 export type { GetIsRequest } from './model/net/request/GetIsRequest';
+export type { GetFeedRequest } from './model/net/request/GetFeedRequest';
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';
 export type { GetCountResponse } from './model/net/response/GetCountResponse';
 export type { GetIsResponse } from './model/net/response/GetIsResponse';
-//
+export type { GetFeedResponse } from './model/net/response/GetFeedResponse';
 // Other
 //
 export { FakeData } from './util/FakeData';

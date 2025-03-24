@@ -732,7 +732,7 @@ Resources:
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: !Ref LambdasKey
-      Handler: lambda/Status/GetFeedLambda.handler
+      Handler: lambda/feed/GetFeedLambda.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs20.x
       Layers:
@@ -785,10 +785,10 @@ Resources:
               application/json: |
                 #set($inputRoot = $input.path('$'))
                 {
-                  "success": true,
-                  "message": null,
-                  "items": $inputRoot.items,
-                  "hasMore": $inputRoot.hasMore
+                  success: true,
+                  message: null,
+                  statuses: $inputRoot.statuses,
+                  hasMore: $inputRoot.hasMore
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

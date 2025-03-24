@@ -1319,7 +1319,7 @@ Resources:
           application/json: |
             {
               "token": $input.json('$.token'),
-              "userToFollow": $input.json('$.userToFollow')
+              "userToUnfollow": $input.json('$.userToUnfollow')
             }
         IntegrationResponses:
           - StatusCode: 200

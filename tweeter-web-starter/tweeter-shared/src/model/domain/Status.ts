@@ -1,6 +1,7 @@
-import { PostSegment, Type } from "./PostSegment";
-import { User } from "./User";
-import { format } from "date-fns";
+import { PostSegment, Type } from './PostSegment';
+import { User } from './User';
+import { format } from 'date-fns';
+import { StatusDto } from '../dto/StatusDto';
 
 export class Status {
   private _post: string;
@@ -94,7 +95,7 @@ export class Status {
     const urls: string[] = [];
 
     for (let word of post.split(/(\s+)/)) {
-      if (word.startsWith("http://") || word.startsWith("https://")) {
+      if (word.startsWith('http://') || word.startsWith('https://')) {
         const endIndex = Status.findUrlEndIndex(word);
         urls.push(word.substring(0, endIndex));
       }
@@ -106,20 +107,20 @@ export class Status {
   private static findUrlEndIndex(word: string): number {
     let index;
 
-    if (word.includes(".com")) {
-      index = word.indexOf(".com");
+    if (word.includes('.com')) {
+      index = word.indexOf('.com');
       index += 4;
-    } else if (word.includes(".net")) {
-      index = word.indexOf(".net");
+    } else if (word.includes('.net')) {
+      index = word.indexOf('.net');
       index += 4;
-    } else if (word.includes(".org")) {
-      index = word.indexOf(".org");
+    } else if (word.includes('.org')) {
+      index = word.indexOf('.org');
       index += 4;
-    } else if (word.includes(".edu")) {
-      index = word.indexOf(".edu");
+    } else if (word.includes('.edu')) {
+      index = word.indexOf('.edu');
       index += 4;
-    } else if (word.includes(".mil")) {
-      index = word.indexOf(".mil");
+    } else if (word.includes('.mil')) {
+      index = word.indexOf('.mil');
       index += 4;
     } else {
       index = word.length;
@@ -171,9 +172,9 @@ export class Status {
     const mentions: string[] = [];
 
     for (let word of post.split(/(\s+)/)) {
-      if (word.startsWith("@")) {
+      if (word.startsWith('@')) {
         // Remove all non-alphanumeric characters
-        word.replaceAll(/[^a-zA-Z0-9]/g, "");
+        word.replaceAll(/[^a-zA-Z0-9]/g, '');
 
         mentions.push(word);
       }
@@ -191,7 +192,7 @@ export class Status {
     while ((match = regex.exec(post)) !== null) {
       const matchIndex = match.index;
       newlines.push(
-        new PostSegment("\n", matchIndex, matchIndex + 1, Type.newline)
+        new PostSegment('\n', matchIndex, matchIndex + 1, Type.newline)
       );
     }
 
@@ -220,7 +221,7 @@ export class Status {
 
   public get formattedDate(): string {
     let date: Date = new Date(this.timestamp);
-    return format(date, "MMMM dd, yyyy HH:mm:ss");
+    return format(date, 'MMMM dd, yyyy HH:mm:ss');
   }
 
   public set timestamp(value: number) {
@@ -273,5 +274,24 @@ export class Status {
 
   public toJson(): string {
     return JSON.stringify(this);
+  }
+
+  public static fromDto(dto: StatusDto | null): Status | null {
+    if (!dto) {
+      return null;
+    }
+    const user = User.fromDto(dto.user);
+    if (!user) {
+      return null;
+    }
+    return new Status(dto.post, user, dto.timestamp);
+  }
+
+  public get dto(): StatusDto {
+    return {
+      post: this.post,
+      user: this.user.dto,
+      timestamp: this.timestamp,
+    };
   }
 }

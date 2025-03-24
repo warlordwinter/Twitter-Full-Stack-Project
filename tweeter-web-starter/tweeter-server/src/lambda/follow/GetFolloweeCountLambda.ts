@@ -5,7 +5,7 @@ import { GetFolloweeCountResponse } from 'tweeter-shared/src/model/net/response/
 export const handler = async (
   requests: GetFolloweeCountRequest
 ): Promise<GetFolloweeCountResponse> => {
-  const userService = new UserService();
+  const userService = new UserService(); // from this request call and create a userservice.
   const count = await userService.getFolloweeCount(
     requests.token,
     requests.userDto

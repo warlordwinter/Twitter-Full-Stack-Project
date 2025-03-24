@@ -126,7 +126,7 @@ jobs:
 
           # Deploy using the S3 template
           aws cloudformation deploy \
-            --template-file s3://${{ env.S3_BUCKET }}/cloudformation.yml \
+            --template-url s3://${{ env.S3_BUCKET }}/cloudformation.yml \
             --stack-name tweeter-api \
             --capabilities CAPABILITY_IAM \
             --parameter-overrides \

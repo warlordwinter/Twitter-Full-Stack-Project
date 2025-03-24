@@ -1,6 +1,6 @@
 import { GetFeedRequest } from 'tweeter-shared/src/model/net/request/GetFeedRequest';
 import { GetFeedResponse } from 'tweeter-shared/src/model/net/response/GetFeedResponse';
-import { StatusService } from '../../model/service/StatusService';
+import { StatusService } from '../../../model/service/StatusService';
 
 export const handler = async (
   requests: GetFeedRequest

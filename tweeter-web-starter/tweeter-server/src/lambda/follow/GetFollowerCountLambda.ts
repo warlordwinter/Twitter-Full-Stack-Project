@@ -6,7 +6,7 @@ export const handler = async (
   requests: GetCountRequest
 ): Promise<GetCountResponse> => {
   const userService = new UserService(); // from this request call and create a userservice.
-  const count = await userService.getFolloweeCount(
+  const count = await userService.getFollowerCount(
     requests.token,
     requests.user
   );

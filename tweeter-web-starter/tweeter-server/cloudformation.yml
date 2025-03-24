@@ -1151,6 +1151,62 @@ Resources:
       RestApiId: !Ref TweeterApi
       StageName: prod
 
+  # Follow Lambda
+  FollowLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub FollowLambda-${Timestamp}
+      CodeUri: dist/
+      Runtime: nodejs18.x
+      Handler: lambda/follow/FollowLambda.handler
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+  # API Gateway Resources for Follow
+  FollowResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: follow
+
+  FollowMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FollowLambda.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "token": "$input.json('$.token')",
+              "userToFollow": $input.json('$.userToFollow')
+            }
+        ResponseTemplates:
+          application/json: |
+            {
+              "success": true,
+              "message": null,
+              "followerCount": $inputRoot.followerCount,
+              "followeeCount": $inputRoot.followeeCount
+            }
+
+  FollowLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FollowLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/follow
+
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
@@ -1187,3 +1243,11 @@ Outputs:
   PostStatusEndpoint:
     Description: Post Status API endpoint
     Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/status/post
+
+  FollowEndpoint:
+    Description: Follow API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/follow
+
+  UnfollowEndpoint:
+    Description: Unfollow API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/unfollow

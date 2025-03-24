@@ -23,7 +23,7 @@ export type { GetCountRequest } from './model/net/request/GetCountRequest';
 export type { GetIsRequest } from './model/net/request/GetIsRequest';
 export type { GetFeedRequest } from './model/net/request/GetFeedRequest';
 export type { PostStatusRequest } from './model/net/request/PostStatusRequest';
-//
+export type { FollowRequest } from './model/net/request/FollowRequest';
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';
@@ -31,6 +31,7 @@ export type { GetCountResponse } from './model/net/response/GetCountResponse';
 export type { GetIsResponse } from './model/net/response/GetIsResponse';
 export type { GetFeedResponse } from './model/net/response/GetFeedResponse';
 export type { PostStatusResponse } from './model/net/response/PostStatusResponse';
+export type { FollowResponse } from './model/net/response/FollowResponse';
 // Other
 //
 export { FakeData } from './util/FakeData';

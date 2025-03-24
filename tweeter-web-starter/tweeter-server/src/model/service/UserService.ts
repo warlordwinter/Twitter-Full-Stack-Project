@@ -1,4 +1,4 @@
-import { User, FakeData, UserDto } from 'tweeter-shared';
+import { FakeData, UserDto } from 'tweeter-shared';
 
 export class UserService {
   public async getIsFollowerStatus(
@@ -45,7 +45,7 @@ export class UserService {
 
   public async follow(
     token: string,
-    userToFollow: User
+    userToFollow: UserDto
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the follow message. Remove when connected to the server
     await new Promise(f => setTimeout(f, 2000));

@@ -19,10 +19,12 @@ export type { UserDto } from './model/dto/UserDto';
 //
 export type { PagedUserItemRequest } from './model/net/request/PagedUserItemRequest';
 export type { GetCountRequest } from './model/net/request/GetCountRequest';
+export type { GetIsRequest } from './model/net/request/GetIsRequest';
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';
 export type { GetCountResponse } from './model/net/response/GetCountResponse';
+export type { GetIsResponse } from './model/net/response/GetIsResponse';
 //
 // Other
 //

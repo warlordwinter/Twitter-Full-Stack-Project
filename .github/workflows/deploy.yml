@@ -99,8 +99,11 @@ jobs:
           echo "Contents of $LAMBDA_ZIP:"
           unzip -l $LAMBDA_ZIP
 
-          # Upload to S3 with versioning enabled
-          aws s3api put-bucket-versioning --bucket ${{ env.S3_BUCKET }} --versioning-configuration Status=Enabled
+          # Check if bucket exists and create if needed
+          if ! aws s3api head-bucket --bucket ${{ env.S3_BUCKET }} 2>/dev/null; then
+            aws s3api create-bucket --bucket ${{ env.S3_BUCKET }} --region ${{ env.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }}
+            aws s3api put-bucket-versioning --bucket ${{ env.S3_BUCKET }} --versioning-configuration Status=Enabled
+          fi
 
           # Upload files and capture version IDs
           LAMBDA_VERSION=$(aws s3api put-object --bucket ${{ env.S3_BUCKET }} --key lambdas.zip --body $LAMBDA_ZIP --query 'VersionId' --output text)

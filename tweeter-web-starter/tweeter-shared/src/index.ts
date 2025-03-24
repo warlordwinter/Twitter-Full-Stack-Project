@@ -26,6 +26,7 @@ export type { PostStatusRequest } from './model/net/request/PostStatusRequest';
 export type { FollowRequest } from './model/net/request/FollowRequest';
 export type { UnfollowRequest } from './model/net/request/UnfollowRequest';
 export type { LoginRequest } from './model/net/request/LoginRequest';
+export type { RegisterRequest } from './model/net/request/RegisterRequest';
 //
 // Response
 //
@@ -36,7 +37,7 @@ export type { GetFeedResponse } from './model/net/response/GetFeedResponse';
 export type { PostStatusResponse } from './model/net/response/PostStatusResponse';
 export type { FollowResponse } from './model/net/response/FollowResponse';
 export type { LoginResponse } from './model/net/response/LoginResponse';
-//
+export type { RegisterResponse } from './model/net/response/RegisterResponse';
 // Other
 //
 export { FakeData } from './util/FakeData';

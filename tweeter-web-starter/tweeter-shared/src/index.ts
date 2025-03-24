@@ -22,7 +22,8 @@ export type { PagedUserItemRequest } from './model/net/request/PagedUserItemRequ
 export type { GetCountRequest } from './model/net/request/GetCountRequest';
 export type { GetIsRequest } from './model/net/request/GetIsRequest';
 export type { GetFeedRequest } from './model/net/request/GetFeedRequest';
-export type { PostStatusRequest } from './model/net/request/postStatusRequest';
+export type { PostStatusRequest } from './model/net/request/PostStatusRequest';
+//
 // Response
 //
 export type { PagedUserItemResponse } from './model/net/response/PagedUserItemResponse';

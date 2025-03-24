@@ -865,7 +865,7 @@ Resources:
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: !Ref LambdasKey
-      Handler: lambda/Status/GetStoryLambda.handler
+      Handler: lambda/feed/GetStoryLambda.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs20.x
       Layers:
@@ -920,7 +920,7 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "items": $inputRoot.items,
+                  "statuses": $inputRoot.statuses,
                   "hasMore": $inputRoot.hasMore
                 }
           - StatusCode: 400

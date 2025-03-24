@@ -1139,6 +1139,10 @@ Resources:
       - GetFolloweeCountOptionsMethod
       - GetIsFollowerMethod
       - GetIsFollowerOptionsMethod
+      - FollowMethod
+      - FollowOptionsMethod
+      - UnfollowMethod
+      - UnfollowOptionsMethod
     Properties:
       Description: Deployment for Tweeter API
       RestApiId: !Ref TweeterApi
@@ -1274,6 +1278,130 @@ Resources:
       FunctionName: !Ref FollowLambda
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/follow
+
+  # Unfollow Lambda
+  UnfollowLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub UnfollowLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/UnfollowLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Unfollow
+  UnfollowResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: unfollow
+
+  UnfollowMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UnfollowResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UnfollowLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userToFollow": $input.json('$.userToFollow')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "followerCount": $inputRoot.followerCount,
+                  "followeeCount": $inputRoot.followeeCount
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  UnfollowOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UnfollowResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  UnfollowLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UnfollowLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/unfollow
 
 Outputs:
   ApiEndpoint:

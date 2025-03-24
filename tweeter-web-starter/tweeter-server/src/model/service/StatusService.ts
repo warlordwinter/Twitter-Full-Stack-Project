@@ -19,7 +19,7 @@ export class StatusService {
     return this.getFakeData(lastItem, pageSize);
   }
 
-  public async postStatus(token: string, newStatus: Status): Promise<void> {
+  public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
     // Pause so we can see the logging out message. Remove when connected to the server
     try {
       await new Promise(f => setTimeout(f, 2000));

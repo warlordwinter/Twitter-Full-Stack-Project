@@ -486,7 +486,7 @@ Resources:
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: !Ref LambdasKey
-      Handler: lambda/user/GetFollowerCountLambda.handler
+      Handler: lambda/follow/GetFollowerCountLambda.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs20.x
       Layers:

@@ -9,6 +9,7 @@ import {
 } from 'tweeter-shared';
 import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
 import { ServerFacade } from '../net/ServerFacade';
+import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterRequest';
 
 export class AuthenticationService {
   private serverFacade: ServerFacade;
@@ -21,9 +22,10 @@ export class AuthenticationService {
     alias: string,
     password: string
   ): Promise<[User, AuthToken]> {
-    const request: LoginRequest = {
+    const request: LoginRequest & TweeterRequest = {
       alias: alias,
       password: password,
+      token: '',
     };
 
     const response = await this.serverFacade.login(request);
@@ -44,12 +46,18 @@ export class AuthenticationService {
     userImageBytes: Uint8Array,
     imageFileExtension: string
   ): Promise<[User, AuthToken]> {
-    // Not neded now, but will be needed when you make the request to the server in milestone 3
-    const imageStringBase64: string =
-      Buffer.from(userImageBytes).toString('base64');
+    const request: RegisterRequest & TweeterRequest = {
+      firstName: firstName,
+      lastName: lastName,
+      alias: alias,
+      password: password,
+      userImageBytes: userImageBytes,
+      imageFileExtension: imageFileExtension,
+      token: '',
+    };
 
-    // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
+    const response = await this.serverFacade.register(request);
+    const user = User.fromDto(response?.user ?? null);
 
     if (user === null) {
       throw new Error('Invalid registration');

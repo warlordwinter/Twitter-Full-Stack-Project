@@ -27,7 +27,14 @@ export class ClientCommunicator {
     const params = this.getParams(
       'POST',
       headers,
-      req ? JSON.stringify(req) : req
+      req
+        ? JSON.stringify(req, (key, value) => {
+            if (value instanceof Uint8Array) {
+              return Array.from(value);
+            }
+            return value;
+          })
+        : req
     );
 
     console.log(`Fetching '${url}' with params '${JSON.stringify(params)}'`);

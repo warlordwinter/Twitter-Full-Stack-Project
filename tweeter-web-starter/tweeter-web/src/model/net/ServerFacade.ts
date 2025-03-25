@@ -13,6 +13,8 @@ import {
   PagedUserItemResponse,
   PostStatusRequest,
   PostStatusResponse,
+  RegisterRequest,
+  RegisterResponse,
   Status,
   User,
   UserDto,
@@ -205,6 +207,21 @@ export class ServerFacade {
       LoginRequest & TweeterRequest,
       LoginResponse
     >(request, '/login');
+    if (response.success) {
+      return response;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async register(
+    request: RegisterRequest & TweeterRequest
+  ): Promise<RegisterResponse | null> {
+    const response = await this.clientCommunicator.doPost<
+      RegisterRequest & TweeterRequest,
+      RegisterResponse
+    >(request, '/register');
     if (response.success) {
       return response;
     } else {

@@ -28,6 +28,8 @@ export type { UnfollowRequest } from './model/net/request/UnfollowRequest';
 export type { LoginRequest } from './model/net/request/LoginRequest';
 export type { RegisterRequest } from './model/net/request/RegisterRequest';
 export type { GetUserRequest } from './model/net/request/GetUserRequest';
+export type { LogoutRequest } from './model/net/request/LogoutRequest';
+export type { AuthRequest } from './model/net/request/AuthRequest';
 //
 // Response
 //
@@ -40,7 +42,8 @@ export type { FollowResponse } from './model/net/response/FollowResponse';
 export type { LoginResponse } from './model/net/response/LoginResponse';
 export type { RegisterResponse } from './model/net/response/RegisterResponse';
 export type { GetUserResponse } from './model/net/response/GetUserResponse';
-//
+export type { LogoutResponse } from './model/net/response/LogoutResponse';
+export type { AuthResponse } from './model/net/response/AuthResponse';
 // Other
 //
 export { FakeData } from './util/FakeData';

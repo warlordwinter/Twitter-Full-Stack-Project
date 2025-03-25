@@ -1576,7 +1576,7 @@ Resources:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref TweeterApi
-      ParentId: !Ref AuthResource
+      ParentId: !GetAtt TweeterApi.RootResourceId
       PathPart: login
 
   LoginMethod:
@@ -1677,7 +1677,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref LoginLambda
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/auth/login
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/login
 
   # API Gateway Resources for Register
   RegisterResource:

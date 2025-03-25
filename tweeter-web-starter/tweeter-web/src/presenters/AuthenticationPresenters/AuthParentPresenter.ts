@@ -1,6 +1,7 @@
 import { AuthToken, User } from 'tweeter-shared';
 import { AuthenticationService } from '../../model/service/AuthenticationService';
 import { AuthPresenter, AuthView } from './AuthPresenter';
+import { ServerFacade } from '../../model/net/ServerFacade';
 
 // export interface AuthParentView extends AuthView {}
 

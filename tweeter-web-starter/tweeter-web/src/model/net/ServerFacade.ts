@@ -7,6 +7,8 @@ import {
   GetIsResponse,
   GetUserRequest,
   GetUserResponse,
+  LoginRequest,
+  LoginResponse,
   PagedUserItemRequest,
   PagedUserItemResponse,
   PostStatusRequest,
@@ -189,6 +191,19 @@ export class ServerFacade {
     >(request, '/user');
     if (response.success) {
       return response.user;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async login(request: LoginRequest): Promise<LoginResponse | null> {
+    const response = await this.clientCommunicator.doPost<
+      LoginRequest,
+      LoginResponse
+    >(request, '/login');
+    if (response.success) {
+      return response;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

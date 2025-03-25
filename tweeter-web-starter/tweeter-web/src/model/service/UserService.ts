@@ -2,6 +2,7 @@ import {
   FakeData,
   GetCountRequest,
   GetIsRequest,
+  GetUserRequest,
   User,
   UserDto,
 } from 'tweeter-shared';
@@ -56,8 +57,11 @@ export class UserService {
   }
 
   public async getUser(token: string, alias: string): Promise<UserDto | null> {
-    // TODO: Replace with the result of calling server
-    return FakeData.instance.findUserByAlias(alias);
+    const request: GetUserRequest = {
+      token: token,
+      alias: alias,
+    };
+    return this.serverFacade.getUser(request);
   }
 
   public async follow(

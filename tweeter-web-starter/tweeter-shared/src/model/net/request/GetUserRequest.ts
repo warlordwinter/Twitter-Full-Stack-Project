@@ -3,5 +3,4 @@ import { UserDto } from '../../dto/UserDto';
 
 export interface GetUserRequest extends TweeterRequest {
   readonly alias: string;
-  readonly user: UserDto;
 }

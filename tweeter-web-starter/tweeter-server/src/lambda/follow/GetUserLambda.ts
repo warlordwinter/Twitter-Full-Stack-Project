@@ -10,6 +10,6 @@ export const handler = async (
   return {
     success: true,
     message: null,
-    user: user,
+    user: user ?? null,
   };
 };

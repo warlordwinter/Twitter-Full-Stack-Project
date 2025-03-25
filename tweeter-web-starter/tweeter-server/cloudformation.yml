@@ -1845,7 +1845,7 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "user": $inputRoot.user
+                  "user": #if($inputRoot.user == null) null #else $inputRoot.user #end
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

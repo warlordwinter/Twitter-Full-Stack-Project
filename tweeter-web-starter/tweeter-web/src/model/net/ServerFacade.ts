@@ -5,6 +5,8 @@ import {
   GetFeedResponse,
   GetIsRequest,
   GetIsResponse,
+  GetUserRequest,
+  GetUserResponse,
   PagedUserItemRequest,
   PagedUserItemResponse,
   PostStatusRequest,
@@ -54,7 +56,7 @@ export class ServerFacade {
     const response = await this.clientCommunicator.doPost<
       PagedUserItemRequest,
       PagedUserItemResponse
-    >(request, '/follower/list');
+    >(request, '/followers/list');
 
     // Convert the UserDto array returned by ClientCommunicator to a User array
     const items: User[] | null =
@@ -171,9 +173,22 @@ export class ServerFacade {
     const response = await this.clientCommunicator.doPost<
       GetCountRequest,
       GetCountResponse
-    >(request, '/follower/count');
+    >(request, '/followers/count');
     if (response.success) {
       return response.value;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getUser(request: GetUserRequest): Promise<UserDto | null> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      GetUserResponse
+    >(request, '/user');
+    if (response.success) {
+      return response.user;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

@@ -1,7 +1,7 @@
 import { UserDto } from '../../dto/UserDto';
+import { TweeterRequest } from './TweeterRequest';
 
-export interface GetIsRequest {
-  token: string;
-  user: UserDto;
-  selectedUser: UserDto;
+export interface GetIsRequest extends TweeterRequest {
+  readonly user: UserDto;
+  readonly selectedUser: UserDto;
 }

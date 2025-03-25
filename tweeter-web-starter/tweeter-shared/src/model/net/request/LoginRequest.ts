@@ -1,4 +1,4 @@
 export interface LoginRequest {
-  alias: string;
-  password: string;
+  readonly alias: string;
+  readonly password: string;
 }

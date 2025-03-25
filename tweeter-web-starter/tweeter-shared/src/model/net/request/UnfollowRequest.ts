@@ -1,6 +1,6 @@
 import { UserDto } from '../../dto/UserDto';
+import { TweeterRequest } from './TweeterRequest';
 
-export interface UnfollowRequest {
-  token: string;
-  userToUnfollow: UserDto;
+export interface UnfollowRequest extends TweeterRequest {
+  readonly userToUnfollow: UserDto;
 }

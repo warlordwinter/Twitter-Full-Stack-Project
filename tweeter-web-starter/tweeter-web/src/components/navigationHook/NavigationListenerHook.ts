@@ -23,7 +23,7 @@ const useNavigationListener = (): NavigationListener => {
     },
     getUser: async (authToken: AuthToken, alias: string) => {
       return await new NavigationPresenter(view).userService.getUser(
-        authToken,
+        authToken.token,
         alias
       );
     },

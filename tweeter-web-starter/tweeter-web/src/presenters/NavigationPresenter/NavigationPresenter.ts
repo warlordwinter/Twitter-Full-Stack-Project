@@ -26,7 +26,10 @@ export class NavigationPresenter {
     try {
       const alias = this.view.extractAlias(event.target.toString());
 
-      const user = await this.userService.getUser(this.view.authToken!, alias);
+      const user = await this.userService.getUser(
+        this.view.authToken?.token!,
+        alias
+      );
 
       if (!!user) {
         if (this.view.currentUser!.equals(user)) {
@@ -49,6 +52,6 @@ export class NavigationPresenter {
     authToken: AuthToken,
     alias: string
   ): Promise<User | null> => {
-    return await this.userService.getUser(authToken, alias);
+    return await this.userService.getUser(authToken.token, alias);
   };
 }

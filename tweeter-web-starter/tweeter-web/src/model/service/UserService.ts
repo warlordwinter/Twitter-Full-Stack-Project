@@ -27,7 +27,7 @@ export class UserService {
     return this.serverFacade.getIsFollowerStatus(request);
   }
 
-  public async getFolloweeCount(token: string, user: UserDto): Promise<number> {
+  public async getFolloweeCount(token: string, user: User): Promise<number> {
     const request: GetCountRequest = {
       token: token,
       user: user,
@@ -35,7 +35,7 @@ export class UserService {
     return this.serverFacade.getFolloweeCount(request);
   }
 
-  public async getFollowerCount(token: string, user: UserDto): Promise<number> {
+  public async getFollowerCount(token: string, user: User): Promise<number> {
     const request: GetCountRequest = {
       token: token,
       user: user,
@@ -56,12 +56,13 @@ export class UserService {
     return [followerCount, followeeCount];
   }
 
-  public async getUser(token: string, alias: string): Promise<UserDto | null> {
+  public async getUser(token: string, alias: string): Promise<User | null> {
     const request: GetUserRequest = {
       token: token,
       alias: alias,
     };
-    return this.serverFacade.getUser(request);
+    const response = await this.serverFacade.getUser(request);
+    return User.fromDto(response ?? null);
   }
 
   public async follow(

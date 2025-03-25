@@ -76,6 +76,7 @@ export class ClientCommunicator {
     const params: RequestInit = {
       method: method,
       mode: 'cors',
+      credentials: 'include',
     };
 
     if (headers) {

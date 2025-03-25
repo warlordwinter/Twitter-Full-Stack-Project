@@ -5,6 +5,7 @@ import {
   LoginRequest,
   RegisterRequest,
   LogoutRequest,
+  AuthToken,
 } from 'tweeter-shared';
 import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
 import { ServerFacade } from '../net/ServerFacade';
@@ -19,7 +20,7 @@ export class AuthenticationService {
   public async login(
     alias: string,
     password: string
-  ): Promise<[User, AuthTokenDto]> {
+  ): Promise<[User, AuthToken]> {
     const request: LoginRequest = {
       alias: alias,
       password: password,
@@ -42,7 +43,7 @@ export class AuthenticationService {
     password: string,
     userImageBytes: Uint8Array,
     imageFileExtension: string
-  ): Promise<[User, AuthTokenDto]> {
+  ): Promise<[User, AuthToken]> {
     // Not neded now, but will be needed when you make the request to the server in milestone 3
     const imageStringBase64: string =
       Buffer.from(userImageBytes).toString('base64');

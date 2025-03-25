@@ -1,4 +1,9 @@
-import { FakeData, GetFeedRequest, Status } from 'tweeter-shared';
+import {
+  FakeData,
+  GetFeedRequest,
+  PostStatusRequest,
+  Status,
+} from 'tweeter-shared';
 import { StatusDto } from 'tweeter-shared/src/model/dto/StatusDto';
 import { ServerFacade } from '../net/ServerFacade';
 export class StatusService {
@@ -27,12 +32,18 @@ export class StatusService {
     token: string,
     userAlias: string,
     pageSize: number,
-    lastItem: StatusDto | null
-  ): Promise<[StatusDto[], boolean]> {
-    return this.getFakeData(lastItem, pageSize);
+    lastItem: Status | null
+  ): Promise<[Status[], boolean]> {
+    const request: GetFeedRequest = {
+      token: token,
+      userAlias: userAlias,
+      pageSize: pageSize,
+      lastItem: lastItem,
+    };
+    return this.serverFacade.getMoreStory(request);
   }
 
-  public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
+  public async postStatus(token: string, newStatus: Status): Promise<void> {
     // Pause so we can see the logging out message. Remove when connected to the server
     try {
       await new Promise(f => setTimeout(f, 2000));
@@ -40,6 +51,11 @@ export class StatusService {
       console.log('error in service');
     }
     // TODO: Call the server to post the status
+    const request: PostStatusRequest = {
+      token: token,
+      newStatus: newStatus,
+    };
+    return this.serverFacade.postStatus(request);
   }
 
   private async getFakeData(

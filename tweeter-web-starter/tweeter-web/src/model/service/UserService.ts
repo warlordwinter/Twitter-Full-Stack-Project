@@ -1,10 +1,10 @@
-import { FakeData, UserDto } from 'tweeter-shared';
+import { FakeData, User, UserDto } from 'tweeter-shared';
 
 export class UserService {
   public async getIsFollowerStatus(
     token: string,
-    user: UserDto,
-    selectedUser: UserDto
+    user: User,
+    selectedUser: User
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
     return FakeData.instance.isFollower();
@@ -22,7 +22,7 @@ export class UserService {
 
   public async unfollow(
     token: string,
-    userToUnfollow: UserDto
+    userToUnfollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the unfollow message. Remove when connected to the server
     await new Promise(f => setTimeout(f, 2000));
@@ -45,7 +45,7 @@ export class UserService {
 
   public async follow(
     token: string,
-    userToFollow: UserDto
+    userToFollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the follow message. Remove when connected to the server
     await new Promise(f => setTimeout(f, 2000));

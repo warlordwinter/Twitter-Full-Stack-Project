@@ -5,6 +5,8 @@ import {
   GetIsResponse,
   PagedUserItemRequest,
   PagedUserItemResponse,
+  PostStatusRequest,
+  PostStatusResponse,
   Status,
   User,
   UserDto,
@@ -90,6 +92,46 @@ export class ServerFacade {
       } else {
         return [items, response.hasMore];
       }
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getMoreStory(
+    request: GetFeedRequest
+  ): Promise<[Status[], boolean]> {
+    const response = await this.clientCommunicator.doPost<
+      GetFeedRequest,
+      GetFeedResponse
+    >(request, '/story/list');
+
+    const items: Status[] | null =
+      response.success && response.statuses
+        ? response.statuses.map(dto => Status.fromDto(dto) as Status)
+        : null;
+
+    if (response.success) {
+      if (items == null) {
+        throw new Error(`No story items found`);
+      } else {
+        return [items, response.hasMore];
+      }
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async postStatus(request: PostStatusRequest): Promise<void> {
+    const response = await this.clientCommunicator.doPost<
+      PostStatusRequest,
+      PostStatusResponse
+    >(request, '/status/post');
+
+    if (response.success) {
+      console.log('Status posted successfully');
+      return;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

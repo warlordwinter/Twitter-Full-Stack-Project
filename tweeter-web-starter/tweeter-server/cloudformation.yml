@@ -785,10 +785,10 @@ Resources:
               application/json: |
                 #set($inputRoot = $input.path('$'))
                 {
-                  success: true,
-                  message: null,
-                  statuses: $inputRoot.statuses,
-                  hasMore: $inputRoot.hasMore
+                  "success": true,
+                  "message": null,
+                  "statuses": $inputRoot.statuses,
+                  "hasMore": $inputRoot.hasMore
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

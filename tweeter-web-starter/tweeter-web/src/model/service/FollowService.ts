@@ -18,9 +18,9 @@ export class FollowService {
       token: token,
       userAlias: userAlias,
       pageSize: pageSize,
-      lastItem: lastItem,
+      lastItem: lastItem?.dto ?? null,
     };
-    return this.serverFacade.getMoreFollowees(request);
+    return this.serverFacade.getMoreFollowers(request);
   }
 
   public async loadMoreFollowees(

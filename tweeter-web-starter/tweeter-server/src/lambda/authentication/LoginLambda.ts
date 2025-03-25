@@ -14,6 +14,6 @@ export const handler = async (
     success: true,
     message: null,
     user: user.dto,
-    authToken: authTokenDto,
+    authToken: authTokenDto.token,
   };
 };

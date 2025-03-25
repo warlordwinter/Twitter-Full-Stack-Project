@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+[ClientCommunicator.ts](mdc:tweeter-web-starter/tweeter-web/src/model/net/ClientCommunicator.ts) can't be changed
+- You can use markdown but dont have to

@@ -1562,7 +1562,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref LogoutLambda
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/auth/logout
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/logout
 
   # API Gateway Resources for Login
   AuthResource:
@@ -1791,7 +1791,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref RegisterLambda
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/auth/register
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/register
 
   # Get User Lambda
   GetUserLambda:
@@ -1963,15 +1963,15 @@ Outputs:
 
   LoginEndpoint:
     Description: Login API endpoint
-    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/auth/login
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/login
 
   RegisterEndpoint:
     Description: Register API endpoint
-    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/auth/register
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/register
 
   LogoutEndpoint:
     Description: Logout API endpoint
-    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/auth/logout
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/logout
 
   GetUserEndpoint:
     Description: Get User API endpoint

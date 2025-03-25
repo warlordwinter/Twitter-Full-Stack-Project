@@ -18,6 +18,7 @@ import {
   UserDto,
 } from 'tweeter-shared';
 import { ClientCommunicator } from './ClientCommunicator';
+import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterRequest';
 
 export class ServerFacade {
   private SERVER_URL =
@@ -197,9 +198,11 @@ export class ServerFacade {
     }
   }
 
-  public async login(request: LoginRequest): Promise<LoginResponse | null> {
+  public async login(
+    request: LoginRequest & TweeterRequest
+  ): Promise<LoginResponse | null> {
     const response = await this.clientCommunicator.doPost<
-      LoginRequest,
+      LoginRequest & TweeterRequest,
       LoginResponse
     >(request, '/login');
     if (response.success) {

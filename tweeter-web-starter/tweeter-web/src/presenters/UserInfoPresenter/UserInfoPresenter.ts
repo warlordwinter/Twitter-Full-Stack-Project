@@ -27,7 +27,7 @@ export class UserInfoPresenter {
   public async setNumbFollowees(authToken: AuthToken, displayedUser: User) {
     try {
       this.view.setFolloweeCount(
-        await this.userService.getFolloweeCount(authToken, displayedUser)
+        await this.userService.getFolloweeCount(authToken.token, displayedUser)
       );
     } catch (error) {
       this.view.displayErrorMessage(
@@ -39,7 +39,7 @@ export class UserInfoPresenter {
   public async setNumbFollowers(authToken: AuthToken, displayedUser: User) {
     try {
       this.view.setFollowerCount(
-        await this.userService.getFollowerCount(authToken, displayedUser)
+        await this.userService.getFollowerCount(authToken.token, displayedUser)
       );
     } catch (error) {
       this.view.displayErrorMessage(
@@ -59,9 +59,9 @@ export class UserInfoPresenter {
       } else {
         this.view.setIsFollower(
           await this.userService.getIsFollowerStatus(
-            authToken!,
-            currentUser!,
-            displayedUser!
+            authToken.token,
+            currentUser,
+            displayedUser
           )
         );
       }

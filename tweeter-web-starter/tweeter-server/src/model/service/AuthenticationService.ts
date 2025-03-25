@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { User, FakeData } from 'tweeter-shared';
+import { User, FakeData, AuthToken } from 'tweeter-shared';
 import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
 
 export class AuthenticationService {
@@ -35,8 +35,8 @@ export class AuthenticationService {
     if (user === null) {
       throw new Error('Invalid registration');
     }
-
-    return [user, FakeData.instance.authToken];
+    const authToken: AuthToken = FakeData.instance.authToken;
+    return [user, authToken.dto];
   }
 
   public async logout(authToken: AuthTokenDto): Promise<void> {

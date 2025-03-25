@@ -1,6 +1,6 @@
-import { AuthRequest } from './AuthRequest';
+import { TweeterRequest } from './TweeterRequest';
 
-export interface LoginRequest extends AuthRequest {
+export interface LoginRequest extends TweeterRequest {
   readonly alias: string;
   readonly password: string;
 }

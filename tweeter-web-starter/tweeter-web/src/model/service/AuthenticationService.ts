@@ -22,6 +22,7 @@ export class AuthenticationService {
     password: string
   ): Promise<[User, AuthToken]> {
     const request: LoginRequest = {
+      token: '',
       alias: alias,
       password: password,
     };

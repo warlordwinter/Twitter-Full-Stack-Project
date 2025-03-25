@@ -1,12 +1,3 @@
-import {
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
-  LogoutRequest,
-  LogoutResponse,
-} from 'tweeter-shared';
-import { AuthRequest } from 'tweeter-shared/dist/model/net/request/AuthRequest';
 import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterRequest';
 import { TweeterResponse } from 'tweeter-shared/dist/model/net/response/TweeterResponse';
 
@@ -17,20 +8,18 @@ export class ClientCommunicator {
     this.SERVER_URL = SERVER_URL;
   }
 
-  public async doPost<
-    REQ extends TweeterRequest | AuthRequest,
-    RES extends
-      | TweeterResponse
-      | LoginResponse
-      | RegisterResponse
-      | LogoutResponse
-  >(req: REQ | undefined, endpoint: string, headers?: Headers): Promise<RES> {
-    if (!headers) {
-      headers = new Headers();
+  public async doPost<REQ extends TweeterRequest, RES extends TweeterResponse>(
+    req: REQ | undefined,
+    endpoint: string,
+    headers?: Headers
+  ): Promise<RES> {
+    if (headers && req) {
+      headers.append('Content-type', 'application/json');
+    } else if (req) {
+      headers = new Headers({
+        'Content-type': 'application/json',
+      });
     }
-
-    headers.append('Content-Type', 'application/json');
-    headers.append('Accept', 'application/json');
 
     console.log(`The request body is '${JSON.stringify(req)}'`);
 
@@ -73,11 +62,7 @@ export class ClientCommunicator {
     headers?: Headers,
     body?: BodyInit
   ): RequestInit {
-    const params: RequestInit = {
-      method: method,
-      mode: 'cors',
-      credentials: 'include',
-    };
+    const params: RequestInit = { method: method };
 
     if (headers) {
       params.headers = headers;

@@ -13,8 +13,8 @@ export class AuthenticationService {
     if (user === null) {
       throw new Error('Invalid alias or password');
     }
-
-    return [user, FakeData.instance.authToken];
+    const authToken: AuthToken = FakeData.instance.authToken;
+    return [user, authToken.dto];
   }
 
   public async register(

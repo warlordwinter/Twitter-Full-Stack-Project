@@ -1,8 +1,10 @@
 import {
   FakeData,
+  FollowRequest,
   GetCountRequest,
   GetIsRequest,
   GetUserRequest,
+  UnfollowRequest,
   User,
   UserDto,
 } from 'tweeter-shared';
@@ -47,8 +49,11 @@ export class UserService {
     token: string,
     userToUnfollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
-    // Pause so we can see the unfollow message. Remove when connected to the server
-    await new Promise(f => setTimeout(f, 2000));
+    const request: UnfollowRequest = {
+      token: token,
+      userToUnfollow: userToUnfollow,
+    };
+    await this.serverFacade.unfollow(request);
 
     const followerCount = await this.getFollowerCount(token, userToUnfollow);
     const followeeCount = await this.getFolloweeCount(token, userToUnfollow);
@@ -69,8 +74,11 @@ export class UserService {
     token: string,
     userToFollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
-    // Pause so we can see the follow message. Remove when connected to the server
-    await new Promise(f => setTimeout(f, 2000));
+    const request: FollowRequest = {
+      token: token,
+      userToFollow: userToFollow,
+    };
+    await this.serverFacade.follow(request);
 
     const followerCount = await this.getFollowerCount(token, userToFollow);
     const followeeCount = await this.getFolloweeCount(token, userToFollow);

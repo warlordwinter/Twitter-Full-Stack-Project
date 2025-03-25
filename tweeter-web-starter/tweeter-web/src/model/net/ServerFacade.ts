@@ -1,4 +1,6 @@
 import {
+  FollowRequest,
+  FollowResponse,
   GetCountRequest,
   GetCountResponse,
   GetFeedRequest,
@@ -18,6 +20,7 @@ import {
   RegisterRequest,
   RegisterResponse,
   Status,
+  UnfollowRequest,
   User,
   UserDto,
 } from 'tweeter-shared';
@@ -237,6 +240,31 @@ export class ServerFacade {
       LogoutRequest & TweeterRequest,
       LogoutResponse
     >(request, '/logout');
+    if (response.success) {
+      return;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async follow(request: FollowRequest): Promise<void> {
+    const response = await this.clientCommunicator.doPost<
+      FollowRequest,
+      FollowResponse
+    >(request, '/follow');
+    if (response.success) {
+      return;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+  public async unfollow(request: UnfollowRequest): Promise<void> {
+    const response = await this.clientCommunicator.doPost<
+      UnfollowRequest,
+      FollowResponse
+    >(request, '/unfollow');
     if (response.success) {
       return;
     } else {

@@ -29,10 +29,7 @@ export class UserService {
 
     // TODO: Call the server
 
-    const followerCount = await this.getFollowerCount(
-      token, //make sure to change this to a string
-      userToUnfollow
-    );
+    const followerCount = await this.getFollowerCount(token, userToUnfollow);
     const followeeCount = await this.getFolloweeCount(token, userToUnfollow);
 
     return [followerCount, followeeCount];
@@ -40,7 +37,12 @@ export class UserService {
 
   public async getUser(token: string, alias: string): Promise<UserDto | null> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.findUserByAlias(alias);
+    const user = FakeData.instance.findUserByAlias(alias);
+    if (user) {
+      return user.dto;
+    } else {
+      return null;
+    }
   }
 
   public async follow(

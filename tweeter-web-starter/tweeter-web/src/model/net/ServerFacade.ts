@@ -1,4 +1,6 @@
 import {
+  GetCountRequest,
+  GetCountResponse,
   GetFeedRequest,
   GetFeedResponse,
   GetIsRequest,
@@ -132,6 +134,46 @@ export class ServerFacade {
     if (response.success) {
       console.log('Status posted successfully');
       return;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getIsFollowerStatus(request: GetIsRequest): Promise<boolean> {
+    const response = await this.clientCommunicator.doPost<
+      GetIsRequest,
+      GetIsResponse
+    >(request, '/followers/status');
+
+    if (response.success) {
+      return response.isFollower;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getFolloweeCount(request: GetCountRequest): Promise<number> {
+    const response = await this.clientCommunicator.doPost<
+      GetCountRequest,
+      GetCountResponse
+    >(request, '/followee/count');
+    if (response.success) {
+      return response.value;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getFollowerCount(request: GetCountRequest): Promise<number> {
+    const response = await this.clientCommunicator.doPost<
+      GetCountRequest,
+      GetCountResponse
+    >(request, '/follower/count');
+    if (response.success) {
+      return response.value;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

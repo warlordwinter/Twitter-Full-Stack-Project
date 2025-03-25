@@ -23,7 +23,7 @@ export class StatusService {
       token: token,
       userAlias: userAlias,
       pageSize: pageSize,
-      lastItem: lastItem,
+      lastItem: lastItem?.dto ?? null,
     };
     return this.serverFacade.getMoreFeed(request);
   }
@@ -38,7 +38,7 @@ export class StatusService {
       token: token,
       userAlias: userAlias,
       pageSize: pageSize,
-      lastItem: lastItem,
+      lastItem: lastItem?.dto ?? null,
     };
     return this.serverFacade.getMoreStory(request);
   }
@@ -53,7 +53,7 @@ export class StatusService {
     // TODO: Call the server to post the status
     const request: PostStatusRequest = {
       token: token,
-      newStatus: newStatus,
+      newStatus: newStatus.dto,
     };
     return this.serverFacade.postStatus(request);
   }

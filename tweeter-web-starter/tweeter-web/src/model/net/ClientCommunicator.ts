@@ -1,3 +1,4 @@
+import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterRequest';
 import { TweeterResponse } from 'tweeter-shared/dist/model/net/response/TweeterResponse';
 
 export class ClientCommunicator {

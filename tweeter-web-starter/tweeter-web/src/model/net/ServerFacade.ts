@@ -1,8 +1,11 @@
 import {
+  GetFeedRequest,
+  GetFeedResponse,
   GetIsRequest,
   GetIsResponse,
   PagedUserItemRequest,
   PagedUserItemResponse,
+  Status,
   User,
   UserDto,
 } from 'tweeter-shared';
@@ -59,6 +62,31 @@ export class ServerFacade {
     if (response.success) {
       if (items == null) {
         throw new Error(`No followees found`);
+      } else {
+        return [items, response.hasMore];
+      }
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async getMoreFeed(
+    request: GetFeedRequest
+  ): Promise<[Status[], boolean]> {
+    const response = await this.clientCommunicator.doPost<
+      GetFeedRequest,
+      GetFeedResponse
+    >(request, '/feed/list');
+
+    const items: Status[] | null =
+      response.success && response.statuses
+        ? response.statuses.map(dto => Status.fromDto(dto) as Status)
+        : null;
+
+    if (response.success) {
+      if (items == null) {
+        throw new Error(`No feed items found`);
       } else {
         return [items, response.hasMore];
       }

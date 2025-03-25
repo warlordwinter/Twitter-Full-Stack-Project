@@ -1799,7 +1799,7 @@ Resources:
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: !Ref LambdasKey
-      Handler: lambda/user/GetUserLambda.handler
+      Handler: lambda/follow/GetUserLambda.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs20.x
       Layers:

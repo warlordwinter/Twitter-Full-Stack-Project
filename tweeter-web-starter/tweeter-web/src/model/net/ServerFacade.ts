@@ -9,6 +9,8 @@ import {
   GetUserResponse,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
   PagedUserItemRequest,
   PagedUserItemResponse,
   PostStatusRequest,
@@ -224,6 +226,19 @@ export class ServerFacade {
     >(request, '/register');
     if (response.success) {
       return response;
+    } else {
+      console.error(response);
+      throw new Error(response.message ?? 'Unknown error');
+    }
+  }
+
+  public async logout(request: LogoutRequest & TweeterRequest): Promise<void> {
+    const response = await this.clientCommunicator.doPost<
+      LogoutRequest & TweeterRequest,
+      LogoutResponse
+    >(request, '/logout');
+    if (response.success) {
+      return;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

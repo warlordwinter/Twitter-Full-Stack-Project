@@ -1464,7 +1464,7 @@ Resources:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref TweeterApi
-      ParentId: !Ref AuthResource
+      ParentId: !GetAtt TweeterApi.RootResourceId
       PathPart: logout
 
   LogoutMethod:

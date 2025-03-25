@@ -1,6 +1,6 @@
-import { AuthRequest } from './AuthRequest';
+import { TweeterRequest } from './TweeterRequest';
 
-export interface RegisterRequest extends AuthRequest {
+export interface RegisterRequest extends Omit<TweeterRequest, 'token'> {
   readonly firstName: string;
   readonly lastName: string;
   readonly alias: string;

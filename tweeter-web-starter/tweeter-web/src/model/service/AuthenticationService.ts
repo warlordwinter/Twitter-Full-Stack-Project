@@ -67,7 +67,11 @@ export class AuthenticationService {
   }
 
   public async logout(authToken: AuthTokenDto): Promise<void> {
-    // Pause so we can see the logging out message. Delete when the call to the server is implemented.
-    await new Promise(res => setTimeout(res, 1000));
+    const request: LogoutRequest & TweeterRequest = {
+      authToken: authToken.token,
+      token: '',
+    };
+
+    await this.serverFacade.logout(request);
   }
 }

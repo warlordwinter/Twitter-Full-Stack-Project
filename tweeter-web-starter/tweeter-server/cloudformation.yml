@@ -1610,7 +1610,7 @@ Resources:
                   "success": true,
                   "message": null,
                   "user": $input.json('$.user'),
-                  "authToken": $inputRoot.authToken
+                  "authToken": $input.json('$.authToken')
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"
@@ -1724,7 +1724,7 @@ Resources:
                   "success": true,
                   "message": null,
                   "user": $input.json('$.user'),
-                  "authToken": $inputRoot.authToken
+                  "authToken": $input.json('$.authToken')
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"
@@ -1847,7 +1847,8 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "user": $input.json('$.user')
+                  "user": $input.json('$.user'),
+                  "authToken": $input.json('$.authToken')
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

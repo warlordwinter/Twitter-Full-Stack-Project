@@ -1,8 +1,16 @@
 import { Buffer } from 'buffer';
 import { User, FakeData, AuthToken } from 'tweeter-shared';
 import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
+import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
+import { IAuthDao } from '../../dao/interfaces/IAuthDao';
 
 export class AuthenticationService {
+  private authDao: IAuthDao;
+
+  constructor(daoFactory: IDaoFactory) {
+    this.authDao = daoFactory.createAuthDao();
+  }
+
   public async login(
     alias: string,
     password: string
@@ -14,7 +22,7 @@ export class AuthenticationService {
       throw new Error('Invalid alias or password');
     }
     const authToken: AuthToken = FakeData.instance.authToken;
-    return [user, authToken.dto];
+    return [user, authToken.dto]; // TODO:change user to userdto
   }
 
   public async register(

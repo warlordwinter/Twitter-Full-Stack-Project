@@ -1,9 +1,10 @@
-import { User, AuthTokenDto } from 'tweeter-shared';
+import { AuthTokenDto, UserDto } from 'tweeter-shared';
 import { IAuthDao } from '../../interfaces/IAuthDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 export class AuthDaoDynamoDB implements IAuthDao {
   private readonly client = new DynamoDBClient({ region: 'us-east-1' });
+
   async register(
     firstName: string,
     lastName: string,
@@ -11,13 +12,17 @@ export class AuthDaoDynamoDB implements IAuthDao {
     password: string,
     imageStringBase64: string,
     imageFileExtension: string
-  ): Promise<[User, AuthTokenDto]> {
-    async;
+  ): Promise<[UserDto, AuthTokenDto]> {
+    throw new Error('Method not implemented.');
   }
+
   async logout(authToken: AuthTokenDto): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  async login(alias: string, password: string): Promise<[User, AuthTokenDto]> {
+  async login(
+    alias: string,
+    password: string
+  ): Promise<[UserDto, AuthTokenDto]> {
     throw new Error('Method not implemented.');
   }
 }

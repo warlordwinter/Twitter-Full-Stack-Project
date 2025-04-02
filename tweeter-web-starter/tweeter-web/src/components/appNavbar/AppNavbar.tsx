@@ -76,7 +76,7 @@ const AppNavbar = (props: Props) => {
             <Nav.Item>
               <NavLink
                 id="logout"
-                onClick={presenter.logOut}
+                onClick={() => presenter.logOut(authToken!)}
                 to={location.pathname}
               >
                 Logout

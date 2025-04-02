@@ -10,8 +10,8 @@ export class StoryPresenter extends StatusItemPresenter {
     authToken: AuthToken,
     userAlias: string
   ): Promise<[Status[], boolean]> {
-    return this.service.loadMoreFeed(
-      authToken,
+    return this.service.loadMoreStory(
+      authToken.token,
       userAlias,
       PAGE_SIZE,
       this.lastItem

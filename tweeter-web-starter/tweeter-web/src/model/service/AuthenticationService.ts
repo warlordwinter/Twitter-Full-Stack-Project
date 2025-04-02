@@ -1,13 +1,35 @@
 import { Buffer } from 'buffer';
-import { User, AuthToken, FakeData } from 'tweeter-shared';
+import {
+  User,
+  FakeData,
+  LoginRequest,
+  RegisterRequest,
+  LogoutRequest,
+  AuthToken,
+} from 'tweeter-shared';
+import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
+import { ServerFacade } from '../net/ServerFacade';
+import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterRequest';
 
 export class AuthenticationService {
+  private serverFacade: ServerFacade;
+
+  public constructor() {
+    this.serverFacade = new ServerFacade();
+  }
+
   public async login(
     alias: string,
     password: string
   ): Promise<[User, AuthToken]> {
-    // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
+    const request: LoginRequest & TweeterRequest = {
+      alias: alias,
+      password: password,
+      token: '',
+    };
+
+    const response = await this.serverFacade.login(request);
+    const user = User.fromDto(response?.user ?? null);
 
     if (user === null) {
       throw new Error('Invalid alias or password');
@@ -24,12 +46,18 @@ export class AuthenticationService {
     userImageBytes: Uint8Array,
     imageFileExtension: string
   ): Promise<[User, AuthToken]> {
-    // Not neded now, but will be needed when you make the request to the server in milestone 3
-    const imageStringBase64: string =
-      Buffer.from(userImageBytes).toString('base64');
+    const request: RegisterRequest & TweeterRequest = {
+      firstName: firstName,
+      lastName: lastName,
+      alias: alias,
+      password: password,
+      userImageBytes: userImageBytes,
+      imageFileExtension: imageFileExtension,
+      token: '',
+    };
 
-    // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
+    const response = await this.serverFacade.register(request);
+    const user = User.fromDto(response?.user ?? null);
 
     if (user === null) {
       throw new Error('Invalid registration');
@@ -38,8 +66,12 @@ export class AuthenticationService {
     return [user, FakeData.instance.authToken];
   }
 
-  public async logout(authToken: AuthToken): Promise<void> {
-    // Pause so we can see the logging out message. Delete when the call to the server is implemented.
-    await new Promise(res => setTimeout(res, 1000));
+  public async logout(authToken: AuthTokenDto): Promise<void> {
+    const request: LogoutRequest & TweeterRequest = {
+      authToken: authToken.token,
+      token: '',
+    };
+
+    await this.serverFacade.logout(request);
   }
 }

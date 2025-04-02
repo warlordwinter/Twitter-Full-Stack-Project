@@ -8,10 +8,9 @@
     "outDir": "./dist",
     "declaration": true,
     "esModuleInterop": true,
-
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "isolatedModules": true,
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,

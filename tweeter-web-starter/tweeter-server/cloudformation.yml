@@ -1,0 +1,1987 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Tweeter API Infrastructure'
+
+Parameters:
+  S3Bucket:
+    Type: String
+    Description: S3 bucket containing deployment artifacts
+
+  NodejsLayerKey:
+    Type: String
+    Description: S3 key for the nodejs layer zip file
+
+  LambdasKey:
+    Type: String
+    Description: S3 key for the Lambda functions zip file
+
+  Timestamp:
+    Type: String
+    Description: Timestamp for versioning the Lambda Layer
+    Default: v1
+
+Resources:
+  # Lambda Layer for shared code
+  TweeterSharedLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub tweeter-shared-${Timestamp}
+      Description: Shared code for Tweeter lambdas
+      Content:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref NodejsLayerKey
+      CompatibleRuntimes:
+        - nodejs20.x
+      CompatibleArchitectures:
+        - x86_64
+
+  # Lambda execution role with additional permissions
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: TweeterLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
+
+  # API Gateway
+  TweeterApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: TweeterAPI
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  # Gateway Responses for CORS
+  GatewayResponse4XX:
+    Type: 'AWS::ApiGateway::GatewayResponse'
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResponseType: DEFAULT_4XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+
+  GatewayResponse5XX:
+    Type: 'AWS::ApiGateway::GatewayResponse'
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResponseType: DEFAULT_5XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+
+  # GetFollowees Lambda
+  GetFolloweesLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetFolloweesLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetFolloweesLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources
+  FolloweeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: followee
+
+  FolloweeListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FolloweeResource
+      PathPart: list
+
+  GetFolloweesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FolloweeListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFolloweesLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userAlias": $input.json('$.userAlias'),
+              "pageSize": $input.json('$.pageSize'),
+              "lastItem": $input.json('$.lastItem')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "items": $inputRoot.items,
+                  "hasMore": $inputRoot.hasMore
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  # OPTIONS method for CORS
+  GetFolloweesOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FolloweeListResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFolloweesLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFolloweesLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/followee/list
+
+  # GetFolloweeCount Lambda
+  GetFolloweeCountLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetFolloweeCountLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetFolloweeCountLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resource for Followee Count
+  FolloweeCountResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FolloweeResource
+      PathPart: count
+
+  GetFolloweeCountMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FolloweeCountResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFolloweeCountLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "user": $input.json('$.user')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "value": $inputRoot.value
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  GetFolloweeCountOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FolloweeCountResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFolloweeCountLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFolloweeCountLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/followee/count
+
+  # GetFollowers Lambda
+  GetFollowersLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetFollowersLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetFollowersLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Followers
+  FollowerResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: followers
+
+  FollowerListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FollowerResource
+      PathPart: list
+
+  GetFollowersMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFollowersLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userAlias": $input.json('$.userAlias'),
+              "pageSize": $input.json('$.pageSize'),
+              "lastItem": $input.json('$.lastItem')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "items": $inputRoot.items,
+                  "hasMore": $inputRoot.hasMore
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  # OPTIONS method for CORS for Followers
+  GetFollowersOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerListResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFollowersLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFollowersLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/followers/list
+
+  # GetFollowerCount Lambda
+  GetFollowerCountLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetFollowerCountLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetFollowerCountLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resource for Follower Count
+  FollowerCountResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FollowerResource
+      PathPart: count
+
+  GetFollowerCountMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerCountResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFollowerCountLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "user": $input.json('$.user')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "value": $inputRoot.value
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  GetFollowerCountOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerCountResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFollowerCountLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFollowerCountLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/followers/count
+
+  # GetIsFollower Lambda
+  GetIsFollowerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetIsFollowerLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetIsFollowerLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resource for IsFollower Status
+  FollowerStatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FollowerResource
+      PathPart: status
+
+  GetIsFollowerMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerStatusResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetIsFollowerLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "user": $input.json('$.user')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "isFollower": $inputRoot.isFollower
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  GetIsFollowerOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowerStatusResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetIsFollowerLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetIsFollowerLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/followers/status
+
+  # GetFeedItems Lambda
+  GetFeedLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetFeedLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/feed/GetFeedLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Feed
+  FeedResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: feed
+
+  FeedListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref FeedResource
+      PathPart: list
+
+  GetFeedMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FeedListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFeedLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userAlias": $input.json('$.userAlias'),
+              "pageSize": $input.json('$.pageSize'),
+              "lastItem": $input.json('$.lastItem')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "statuses": $inputRoot.statuses,
+                  "hasMore": $inputRoot.hasMore
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  # OPTIONS method for CORS for Followers
+  GetFeedOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FeedListResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFeedLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFeedLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/feed/list
+
+  GetStoryLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetStoryLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/feed/GetStoryLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Story
+  StoryResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: story
+
+  StoryListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref StoryResource
+      PathPart: list
+
+  GetStoryMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref StoryListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetStoryLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userAlias": $input.json('$.userAlias'),
+              "pageSize": $input.json('$.pageSize'),
+              "lastItem": $input.json('$.lastItem')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "statuses": $inputRoot.statuses,
+                  "hasMore": $inputRoot.hasMore
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  GetStoryOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref StoryListResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetFeedStoryPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetStoryLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/story/list
+
+  # Post Status Lambda
+  PostStatusLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub PostStatusLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/feed/PostStatusLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Post Status
+  StatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: status
+
+  StatusPostResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !Ref StatusResource
+      PathPart: post
+
+  PostStatusMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref StatusPostResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostStatusLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "newStatus": $input.json('$.newStatus')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  PostStatusOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref StatusPostResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  PostStatusLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PostStatusLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/status/post
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetFolloweesMethod
+      - GetFolloweesOptionsMethod
+      - GetFollowersMethod
+      - GetFollowersOptionsMethod
+      - GetFeedMethod
+      - GetFeedOptionsMethod
+      - GetStoryMethod
+      - GetStoryOptionsMethod
+      - PostStatusMethod
+      - PostStatusOptionsMethod
+      - GetFollowerCountMethod
+      - GetFollowerCountOptionsMethod
+      - GetFolloweeCountMethod
+      - GetFolloweeCountOptionsMethod
+      - GetIsFollowerMethod
+      - GetIsFollowerOptionsMethod
+      - FollowMethod
+      - FollowOptionsMethod
+      - UnfollowMethod
+      - UnfollowOptionsMethod
+      - LoginMethod
+      - LoginOptionsMethod
+      - RegisterMethod
+      - RegisterOptionsMethod
+      - LogoutMethod
+      - LogoutOptionsMethod
+      - GetUserMethod
+      - GetUserOptionsMethod
+    Properties:
+      Description: Deployment for Tweeter API
+      RestApiId: !Ref TweeterApi
+
+  # API Gateway Stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref TweeterApi
+      StageName: prod
+
+  # Follow Lambda
+  FollowLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub FollowLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/FollowLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Follow
+  FollowResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: follow
+
+  FollowMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FollowLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userToFollow": $input.json('$.userToFollow')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "followerCount": $inputRoot.followerCount,
+                  "followeeCount": $inputRoot.followeeCount
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  FollowOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref FollowResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  FollowLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref FollowLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/follow
+
+  # Unfollow Lambda
+  UnfollowLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub UnfollowLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/UnfollowLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Unfollow
+  UnfollowResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: unfollow
+
+  UnfollowMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UnfollowResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UnfollowLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "userToUnfollow": $input.json('$.userToUnfollow')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "followerCount": $inputRoot.followerCount,
+                  "followeeCount": $inputRoot.followeeCount
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  UnfollowOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UnfollowResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  UnfollowLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UnfollowLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/unfollow
+
+  # Login Lambda
+  LoginLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub LoginLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/authentication/LoginLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # Register Lambda
+  RegisterLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub RegisterLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/authentication/RegisterLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # Logout Lambda
+  LogoutLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub LogoutLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/authentication/LogoutLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Logout
+  LogoutResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: logout
+
+  LogoutMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref LogoutResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LogoutLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "authToken": $input.json('$.authToken')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  LogoutOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref LogoutResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  LogoutLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LogoutLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/logout
+
+  # API Gateway Resources for Login
+  AuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: auth
+
+  LoginResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: login
+
+  LoginMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref LoginResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "alias": $input.json('$.alias'),
+              "password": $input.json('$.password')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "user": $input.json('$.user'),
+                  "authToken": $input.json('$.authToken')
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  LoginOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref LoginResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
+  LoginLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LoginLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/login
+
+  # API Gateway Resources for Register
+  RegisterResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: register
+
+  RegisterMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref RegisterResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "alias": $input.json('$.alias'),
+              "password": $input.json('$.password'),
+              "firstName": $input.json('$.firstName'),
+              "lastName": $input.json('$.lastName'),
+              "userImageBytes": $input.json('$.userImageBytes'),
+              "imageFileExtension": $input.json('$.imageFileExtension')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "user": $input.json('$.user'),
+                  "authToken": $input.json('$.authToken')
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
+          ResponseModels:
+            application/json: 'Error'
+
+  RegisterOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref RegisterResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
+  RegisterLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RegisterLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/register
+
+  # Get User Lambda
+  GetUserLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub GetUserLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/GetUserLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # API Gateway Resources for Get User
+  UserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ParentId: !GetAtt TweeterApi.RootResourceId
+      PathPart: user
+
+  GetUserMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UserResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetUserLambda.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: |
+            {
+              "token": $input.json('$.token'),
+              "alias": $input.json('$.alias')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "success": true,
+                  "message": null,
+                  "user": $input.json('$.user'),
+                  "authToken": $input.json('$.authToken')
+                }
+          - StatusCode: 400
+            SelectionPattern: ".*\\[Bad Request\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+          - StatusCode: 500
+            SelectionPattern: ".*\\[Internal Service Error\\].*"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Empty'
+        - StatusCode: 400
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+        - StatusCode: 500
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+          ResponseModels:
+            application/json: 'Error'
+
+  GetUserOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TweeterApi
+      ResourceId: !Ref UserResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  GetUserLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetUserLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/user
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/
+
+  GetFolloweesEndpoint:
+    Description: Get Followees API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/followee/list
+
+  GetFolloweeCountEndpoint:
+    Description: Get Followee Count API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/followee/count
+
+  GetFollowersEndpoint:
+    Description: Get Followers API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/followers/list
+
+  GetFollowerCountEndpoint:
+    Description: Get Follower Count API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/followers/count
+
+  GetIsFollowerEndpoint:
+    Description: Get Is Follower Status API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/followers/status
+
+  GetFeedEndpoint:
+    Description: Get Feed API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/feed/list
+
+  GetStoryEndpoint:
+    Description: Get Story API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/story/list
+
+  PostStatusEndpoint:
+    Description: Post Status API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/status/post
+
+  FollowEndpoint:
+    Description: Follow API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/follow
+
+  UnfollowEndpoint:
+    Description: Unfollow API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/unfollow
+
+  LoginEndpoint:
+    Description: Login API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/login
+
+  RegisterEndpoint:
+    Description: Register API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/register
+
+  LogoutEndpoint:
+    Description: Logout API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/logout
+
+  GetUserEndpoint:
+    Description: Get User API endpoint
+    Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/user

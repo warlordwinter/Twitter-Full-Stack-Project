@@ -59,7 +59,7 @@ const UserInfo = (props: Props) => {
       displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
 
       const [followerCount, followeeCount] = await presenter.userService.follow(
-        authToken!,
+        authToken!.token,
         displayedUser!
       );
 
@@ -86,7 +86,7 @@ const UserInfo = (props: Props) => {
       displayInfoMessage(`Unfollowing ${displayedUser!.name}...`, 0);
 
       const [followerCount, followeeCount] =
-        await presenter.userService.unfollow(authToken!, displayedUser!);
+        await presenter.userService.unfollow(authToken!.token, displayedUser!);
 
       setIsFollower(false);
       setFollowerCount(followerCount);

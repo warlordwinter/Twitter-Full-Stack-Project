@@ -93,7 +93,16 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:*
-                Resource: '*'
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - '*'
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
 
   # API Gateway
   TweeterApi:

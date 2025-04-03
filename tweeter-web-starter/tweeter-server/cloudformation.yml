@@ -76,7 +76,7 @@ Resources:
   UserImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub wiley-tweeter-storage
+      BucketName: !Sub wiley-tweeter-image-storage
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false

@@ -30,7 +30,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
     this.s3Client = new S3Client({ region: this.region });
     this.authTokenTable = 'authtoken';
     this.userTable = 'user';
-    this.bucketName = 'wiley-tweeter-storage';
+    this.bucketName = 'wiley-tweeter-image-storage';
   }
 
   private generateAuthToken(): string {

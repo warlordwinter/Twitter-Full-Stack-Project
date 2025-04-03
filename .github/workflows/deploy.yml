@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - Milestone3A
+      - Milestone4A
   workflow_dispatch:
 
 env:

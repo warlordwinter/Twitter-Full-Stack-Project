@@ -50,7 +50,6 @@ export class AuthDaoDynamoDB implements IAuthDao {
       Key: 'image/' + fileName,
       Body: decodedImageBuffer,
       ContentType: 'image/png',
-      ACL: ObjectCannedACL.public_read,
     };
     const c = new PutObjectCommand(s3Params);
     try {

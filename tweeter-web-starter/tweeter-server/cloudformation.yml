@@ -82,13 +82,33 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
-      ObjectOwnership: BucketOwnerPreferred
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']
-            AllowedMethods: [GET]
+            AllowedMethods: [GET, PUT]
             AllowedOrigins: ['*']
             MaxAge: 3000
+
+  # S3 Bucket Policy to allow PUT and GET requests
+  UserImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UserImagesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Allow public read access (GET requests)
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${UserImagesBucket}/image/*'
+
+          # Allow Lambda execution role to upload images
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt LambdaExecutionRole.Arn
+            Action: 's3:PutObject'
+            Resource: !Sub 'arn:aws:s3:::${UserImagesBucket}/image/*'
 
   # Lambda execution role with additional permissions
   LambdaExecutionRole:

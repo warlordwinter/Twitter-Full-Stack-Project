@@ -28,8 +28,6 @@ Resources:
       AttributeDefinitions:
         - AttributeName: 'token'
           AttributeType: 'S' # Primary key for token lookups
-        - AttributeName: 'timestamp'
-          AttributeType: 'N' # Number type for timestamp
       KeySchema:
         - AttributeName: 'token'
           KeyType: 'HASH' # Primary Key
@@ -50,14 +48,6 @@ Resources:
       AttributeDefinitions:
         - AttributeName: 'alias'
           AttributeType: 'S' # Primary key for user lookups
-        - AttributeName: 'firstName'
-          AttributeType: 'S'
-        - AttributeName: 'lastName'
-          AttributeType: 'S'
-        - AttributeName: 'imageUrl'
-          AttributeType: 'S'
-        - AttributeName: 'password'
-          AttributeType: 'S'
       KeySchema:
         - AttributeName: 'alias'
           KeyType: 'HASH' # Primary Key

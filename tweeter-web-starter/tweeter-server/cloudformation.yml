@@ -82,6 +82,7 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+      ObjectOwnership: BucketOwnerPreferred
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']

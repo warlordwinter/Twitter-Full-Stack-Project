@@ -45,6 +45,14 @@ export class AuthenticationService {
     if (user === null) {
       throw new Error('Invalid registration');
     }
+    this.authDao.register(
+      firstName,
+      lastName,
+      alias,
+      password,
+      imageStringBase64,
+      imageFileExtension
+    );
     return [user, authTokenDto];
   }
 

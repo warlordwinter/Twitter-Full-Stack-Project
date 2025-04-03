@@ -112,6 +112,11 @@ Resources:
                   - s3:PutObject
                   - s3:GetObject
                   - s3:DeleteObject
+                Resource:
+                  - !Sub arn:aws:s3:::wiley-tweeter-image-storage/image/*
+                  - !Sub arn:aws:s3:::wiley-tweeter-image-storage
+              - Effect: Allow
+                Action:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:DeleteItem
@@ -119,7 +124,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  - !Sub arn:aws:s3:::tweeter-user-images-${AWS::AccountId}/*
+                  - !Sub arn:aws:s3:::wiley-tweeter-image-storage/*
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
 

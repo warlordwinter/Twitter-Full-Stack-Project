@@ -17,6 +17,7 @@ export const handler = async (
     requests.userImageBytes,
     requests.imageFileExtension
   );
+  console.log(user);
   return {
     success: true,
     message: null,

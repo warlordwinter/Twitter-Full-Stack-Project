@@ -3,7 +3,12 @@ import { IAuthDao } from '../../interfaces/IAuthDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 export class AuthDaoDynamoDB implements IAuthDao {
-  private readonly client = new DynamoDBClient({ region: 'us-east-1' });
+  private readonly client = new DynamoDBClient({ region: 'us-west-2' });
+
+  constructor() {
+    this.client = new DynamoDBClient({ region: 'us-west-2' });
+    this.authTokenTable = 'tweeter-api-authtoken';
+  }
 
   async register(
     firstName: string,

@@ -27,14 +27,44 @@ Resources:
       TableName: 'authtoken'
       AttributeDefinitions:
         - AttributeName: 'token'
-          AttributeType: 'S' # 'S' stands for String
+          AttributeType: 'S' # Primary key for token lookups
       KeySchema:
         - AttributeName: 'token'
           KeyType: 'HASH' # Primary Key
-      BillingMode: PROVISIONED # On-demand pricing (no capacity provisioning)
+      BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 25 # Free Tier limit
-        WriteCapacityUnits: 25 # Free Tier limit
+        ReadCapacityUnits: 25
+        WriteCapacityUnits: 25
+      TimeToLiveSpecification:
+        AttributeName: 'expirationTime' # Items will be automatically deleted when this timestamp is reached
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+
+  UserTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'user'
+      AttributeDefinitions:
+        - AttributeName: 'alias'
+          AttributeType: 'S' # Primary key for user lookups
+        - AttributeName: 'firstName'
+          AttributeType: 'S'
+        - AttributeName: 'lastName'
+          AttributeType: 'S'
+        - AttributeName: 'imageUrl'
+          AttributeType: 'S'
+        - AttributeName: 'password'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'alias'
+          KeyType: 'HASH' # Primary Key
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 25
+        WriteCapacityUnits: 25
+      SSESpecification:
+        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
   # Lambda Layer for shared code
   TweeterSharedLayer:

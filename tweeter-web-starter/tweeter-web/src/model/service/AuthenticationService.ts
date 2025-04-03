@@ -1,7 +1,6 @@
 import { Buffer } from 'buffer';
 import {
   User,
-  FakeData,
   LoginRequest,
   RegisterRequest,
   LogoutRequest,
@@ -31,11 +30,18 @@ export class AuthenticationService {
     const response = await this.serverFacade.login(request);
     const user = User.fromDto(response?.user ?? null);
 
-    if (user === null) {
+    // Login response has authToken as string
+    const authTokenDto: AuthTokenDto = {
+      token: response?.authToken ?? '',
+      timestamp: Date.now(),
+    };
+    const authToken = AuthToken.fromDto(authTokenDto);
+
+    if (user === null || authToken === null) {
       throw new Error('Invalid alias or password');
     }
 
-    return [user, FakeData.instance.authToken];
+    return [user, authToken];
   }
 
   public async register(
@@ -58,12 +64,13 @@ export class AuthenticationService {
 
     const response = await this.serverFacade.register(request);
     const user = User.fromDto(response?.user ?? null);
+    const authToken = AuthToken.fromDto(response?.authToken ?? null);
 
-    if (user === null) {
+    if (user === null || authToken === null) {
       throw new Error('Invalid registration');
     }
 
-    return [user, FakeData.instance.authToken];
+    return [user, authToken];
   }
 
   public async logout(authToken: AuthTokenDto): Promise<void> {

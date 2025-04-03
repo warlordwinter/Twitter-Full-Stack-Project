@@ -5,6 +5,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
@@ -34,7 +35,6 @@ export class AuthDaoDynamoDB implements IAuthDao {
     imageStringBase64: string,
     imageFileExtension: string
   ): Promise<[UserDto, AuthTokenDto]> {
-    // Check if user already exists
     const getCommand = new GetCommand({
       TableName: this.userTable,
       Key: { alias },
@@ -85,12 +85,58 @@ export class AuthDaoDynamoDB implements IAuthDao {
   }
 
   async logout(authToken: AuthTokenDto): Promise<void> {
-    throw new Error('Method not implemented.');
+    const deleteCommand = new DeleteCommand({
+      TableName: this.authTokenTable,
+      Key: { token: authToken.token },
+    });
+
+    await this.client.send(deleteCommand);
   }
+
   async login(
     alias: string,
     password: string
   ): Promise<[UserDto, AuthTokenDto]> {
-    throw new Error('Method not implemented.');
+    const getCommand = new GetCommand({
+      TableName: this.userTable,
+      Key: { alias },
+    });
+
+    const result = await this.client.send(getCommand);
+    if (!result.Item) {
+      throw new Error('Invalid alias or password');
+    }
+
+    const isValid = await bcrypt.compare(password, result.Item.password);
+    if (!isValid) {
+      throw new Error('Invalid alias or password');
+    }
+
+    const userDto: UserDto = {
+      firstName: result.Item.firstName,
+      lastName: result.Item.lastName,
+      alias: result.Item.alias,
+      imageUrl: result.Item.image,
+    };
+
+    const authToken = this.generateAuthToken();
+    const expiresAt = Math.floor(Date.now() / 1000) + 86400;
+
+    const putAuthTokenCommand = new PutCommand({
+      TableName: this.authTokenTable,
+      Item: {
+        token: authToken,
+        expiresAt,
+      },
+    });
+
+    await this.client.send(putAuthTokenCommand);
+
+    const authTokenDto: AuthTokenDto = {
+      token: authToken,
+      timestamp: Date.now(),
+    };
+
+    return [userDto, authTokenDto];
   }
 }

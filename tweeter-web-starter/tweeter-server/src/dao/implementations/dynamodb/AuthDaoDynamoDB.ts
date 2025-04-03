@@ -9,22 +9,56 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-
+import {
+  S3Client,
+  PutObjectCommand,
+  ObjectCannedACL,
+} from '@aws-sdk/client-s3';
 export class AuthDaoDynamoDB implements IAuthDao {
-  private readonly client;
+  private readonly dynamoClient;
+  private readonly s3Client;
   private readonly authTokenTable: string;
   private readonly userTable: string;
   private readonly saltRounds: number = 10;
+  private readonly bucketName: string;
+  private readonly region: string = 'us-west-2';
 
   constructor() {
-    const dbClient = new DynamoDBClient({ region: 'us-west-2' });
-    this.client = DynamoDBDocumentClient.from(dbClient);
+    this.dynamoClient = DynamoDBDocumentClient.from(
+      new DynamoDBClient({ region: this.region })
+    );
+    this.s3Client = new S3Client({ region: this.region });
     this.authTokenTable = 'authtoken';
     this.userTable = 'user';
+    this.bucketName = 'wiley-tweeter-storage';
   }
 
   private generateAuthToken(): string {
     return crypto.randomBytes(32).toString('hex');
+  }
+
+  private async putImage(
+    fileName: string,
+    imageStringBase64Encoded: string
+  ): Promise<string> {
+    let decodedImageBuffer: Buffer = Buffer.from(
+      imageStringBase64Encoded,
+      'base64'
+    );
+    const s3Params = {
+      Bucket: this.bucketName,
+      Key: 'image/' + fileName,
+      Body: decodedImageBuffer,
+      ContentType: 'image/png',
+      ACL: ObjectCannedACL.public_read,
+    };
+    const c = new PutObjectCommand(s3Params);
+    try {
+      await this.s3Client.send(c);
+      return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/image/${fileName}`;
+    } catch (error) {
+      throw Error('s3 put image failed with: ' + error);
+    }
   }
 
   async register(
@@ -40,12 +74,16 @@ export class AuthDaoDynamoDB implements IAuthDao {
       Key: { alias },
     });
 
-    const existingUser = await this.client.send(getCommand);
+    const existingUser = await this.dynamoClient.send(getCommand);
     if (existingUser.Item) {
       throw new Error(`User with alias "${alias}" already exists`);
     }
 
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
+    const imageUrl = await this.putImage(
+      `${alias}${imageFileExtension}`,
+      imageStringBase64
+    );
 
     const putUserCommand = new PutCommand({
       TableName: this.userTable,
@@ -54,14 +92,13 @@ export class AuthDaoDynamoDB implements IAuthDao {
         firstName,
         lastName,
         password: hashedPassword,
-        image: imageStringBase64,
-        imageFileExtension,
+        imageUrl,
         createdAt: Date.now(),
       },
     });
 
-    await this.client.send(putUserCommand);
-    const user = new User(firstName, lastName, alias, imageStringBase64);
+    await this.dynamoClient.send(putUserCommand);
+    const user = new User(firstName, lastName, alias, imageUrl);
 
     const authToken = this.generateAuthToken();
     const expiresAt = Math.floor(Date.now() / 1000) + 86400;
@@ -79,7 +116,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       },
     });
 
-    await this.client.send(putAuthTokenCommand);
+    await this.dynamoClient.send(putAuthTokenCommand);
 
     return [user.dto, authTokenDto];
   }
@@ -90,7 +127,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       Key: { token: authToken.token },
     });
 
-    await this.client.send(deleteCommand);
+    await this.dynamoClient.send(deleteCommand);
   }
 
   async login(
@@ -102,7 +139,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       Key: { alias },
     });
 
-    const result = await this.client.send(getCommand);
+    const result = await this.dynamoClient.send(getCommand);
     if (!result.Item) {
       throw new Error('Invalid alias or password');
     }
@@ -116,7 +153,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       firstName: result.Item.firstName,
       lastName: result.Item.lastName,
       alias: result.Item.alias,
-      imageUrl: result.Item.image,
+      imageUrl: result.Item.imageUrl,
     };
 
     const authToken = this.generateAuthToken();
@@ -130,7 +167,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       },
     });
 
-    await this.client.send(putAuthTokenCommand);
+    await this.dynamoClient.send(putAuthTokenCommand);
 
     const authTokenDto: AuthTokenDto = {
       token: authToken,

@@ -72,6 +72,23 @@ Resources:
       CompatibleArchitectures:
         - x86_64
 
+  # S3 bucket for user images
+  UserImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub wiley-tweeter-storage
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
   # Lambda execution role with additional permissions
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -92,7 +109,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - s3:*
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:DeleteItem
@@ -100,7 +119,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  - '*'
+                  - !Sub arn:aws:s3:::tweeter-user-images-${AWS::AccountId}/*
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
 

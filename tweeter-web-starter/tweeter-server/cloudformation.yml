@@ -28,6 +28,8 @@ Resources:
       AttributeDefinitions:
         - AttributeName: 'token'
           AttributeType: 'S' # Primary key for token lookups
+        - AttributeName: 'timestamp'
+          AttributeType: 'N' # Number type for timestamp
       KeySchema:
         - AttributeName: 'token'
           KeyType: 'HASH' # Primary Key
@@ -36,7 +38,7 @@ Resources:
         ReadCapacityUnits: 25
         WriteCapacityUnits: 25
       TimeToLiveSpecification:
-        AttributeName: 'expirationTime' # Items will be automatically deleted when this timestamp is reached
+        AttributeName: 'timestamp' # Items will be automatically deleted when this timestamp is reached
         Enabled: true
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS

@@ -10,10 +10,10 @@ export const handler = async (
     new DyanmoDBFactory()
   );
   const [user, authTokenDto] = await authenticationService.register(
-    requests.alias,
-    requests.password,
     requests.firstName,
     requests.lastName,
+    requests.alias,
+    requests.password,
     requests.userImageBytes,
     requests.imageFileExtension
   );

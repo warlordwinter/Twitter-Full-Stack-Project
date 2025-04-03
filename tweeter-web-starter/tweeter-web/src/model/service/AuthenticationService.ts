@@ -64,6 +64,8 @@ export class AuthenticationService {
 
     const response = await this.serverFacade.register(request);
     const user = User.fromDto(response?.user ?? null);
+
+    // Register response has authToken as AuthTokenDto
     const authToken = AuthToken.fromDto(response?.authToken ?? null);
 
     if (user === null || authToken === null) {

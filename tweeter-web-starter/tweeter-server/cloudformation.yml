@@ -31,7 +31,7 @@ Resources:
       KeySchema:
         - AttributeName: 'token'
           KeyType: 'HASH' # Primary Key
-      BillingMode: PAY_PER_REQUEST # On-demand pricing (no capacity provisioning)
+      BillingMode: PROVISIONED # On-demand pricing (no capacity provisioning)
       ProvisionedThroughput:
         ReadCapacityUnits: 25 # Free Tier limit
         WriteCapacityUnits: 25 # Free Tier limit

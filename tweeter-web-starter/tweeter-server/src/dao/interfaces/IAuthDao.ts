@@ -1,4 +1,4 @@
-import { User, UserDto } from 'tweeter-shared';
+import { UserDto } from 'tweeter-shared';
 
 import { AuthTokenDto } from 'tweeter-shared';
 

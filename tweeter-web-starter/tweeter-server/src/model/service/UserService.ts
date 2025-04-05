@@ -1,6 +1,14 @@
 import { FakeData, UserDto } from 'tweeter-shared';
+import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
+import { IUserDao } from '../../dao/interfaces/IUserDao';
 
 export class UserService {
+  private followDao: IUserDao;
+
+  constructor(daoFactory: IDaoFactory) {
+    this.followDao = daoFactory.createFollowDao();
+  }
+
   public async getIsFollowerStatus(
     token: string,
     user: UserDto,

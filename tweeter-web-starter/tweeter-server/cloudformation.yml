@@ -88,10 +88,6 @@ Resources:
           AttributeType: 'S'
         - AttributeName: 'followee_handle'
           AttributeType: 'S'
-        - AttributeName: 'follower_name'
-          AttributeType: 'S'
-        - AttributeName: 'followee_name'
-          AttributeType: 'S'
       KeySchema:
         - AttributeName: 'follower_handle'
           KeyType: 'HASH'

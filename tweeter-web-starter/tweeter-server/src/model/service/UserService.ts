@@ -1,4 +1,4 @@
-import { FakeData, UserDto } from 'tweeter-shared';
+import { UserDto } from 'tweeter-shared';
 import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
 import { IUserDao } from '../../dao/interfaces/IUserDao';
 
@@ -14,18 +14,15 @@ export class UserService {
     user: UserDto,
     selectedUser: UserDto
   ): Promise<boolean> {
-    // TODO: Replace with the result of calling server
-    return FakeData.instance.isFollower();
+    return this.followDao.getIsFollowerStatus(token, user, selectedUser);
   }
 
   public async getFolloweeCount(token: string, user: UserDto): Promise<number> {
-    // TODO: Replace with the result of calling server
-    return FakeData.instance.getFolloweeCount(user.alias);
+    return this.followDao.getFolloweeCount(token, user);
   }
 
   public async getFollowerCount(token: string, user: UserDto): Promise<number> {
-    // TODO: Replace with the result of calling server
-    return FakeData.instance.getFollowerCount(user.alias);
+    return this.followDao.getFollowerCount(token, user);
   }
 
   public async unfollow(
@@ -35,22 +32,20 @@ export class UserService {
     // Pause so we can see the unfollow message. Remove when connected to the server
     await new Promise(f => setTimeout(f, 2000));
 
-    // TODO: Call the server
-
-    const followerCount = await this.getFollowerCount(token, userToUnfollow);
-    const followeeCount = await this.getFolloweeCount(token, userToUnfollow);
+    const followerCount = await this.followDao.getFollowerCount(
+      token,
+      userToUnfollow
+    );
+    const followeeCount = await this.followDao.getFolloweeCount(
+      token,
+      userToUnfollow
+    );
 
     return [followerCount, followeeCount];
   }
 
   public async getUser(token: string, alias: string): Promise<UserDto | null> {
-    // TODO: Replace with the result of calling server
-    const user = FakeData.instance.findUserByAlias(alias);
-    if (user) {
-      return user.dto;
-    } else {
-      return null;
-    }
+    return this.followDao.getUser(token, alias);
   }
 
   public async follow(
@@ -60,10 +55,14 @@ export class UserService {
     // Pause so we can see the follow message. Remove when connected to the server
     await new Promise(f => setTimeout(f, 2000));
 
-    // TODO: Call the server
-
-    const followerCount = await this.getFollowerCount(token, userToFollow);
-    const followeeCount = await this.getFolloweeCount(token, userToFollow);
+    const followerCount = await this.followDao.getFollowerCount(
+      token,
+      userToFollow
+    );
+    const followeeCount = await this.followDao.getFolloweeCount(
+      token,
+      userToFollow
+    );
 
     return [followerCount, followeeCount];
   }

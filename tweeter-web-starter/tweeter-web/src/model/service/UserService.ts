@@ -1,12 +1,10 @@
 import {
-  FakeData,
   FollowRequest,
   GetCountRequest,
   GetIsRequest,
   GetUserRequest,
   UnfollowRequest,
   User,
-  UserDto,
 } from 'tweeter-shared';
 import { ServerFacade } from '../net/ServerFacade';
 export class UserService {

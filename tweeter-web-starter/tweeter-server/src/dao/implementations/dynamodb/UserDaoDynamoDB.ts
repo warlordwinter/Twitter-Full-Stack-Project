@@ -58,6 +58,8 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
+    console.log('user in getFolloweeCount', user);
+
     const result = await this.dynamoClient.send(
       new GetCommand({
         TableName: this.followTable,
@@ -99,6 +101,7 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('Invalid token');
     }
     const user = await this.getUser(token, userToUnfollow.alias);
+    console.log('user in unfollow', user);
     if (!user) {
       throw new Error('User not found in unfollow action');
     }
@@ -178,6 +181,7 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
+    console.log('alias in getUser', alias);
     const result = await this.dynamoClient.send(
       new GetCommand({
         TableName: this.userTable,

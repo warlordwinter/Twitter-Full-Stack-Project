@@ -41,6 +41,27 @@ Resources:
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
+  FollowTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'follow'
+      AttributeDefinitions:
+        - AttributeName: 'follower_alias'
+          AttributeType: 'S' # Primary key for follower
+        - AttributeName: 'followee_alias'
+          AttributeType: 'S' # Secondary key for followee
+      KeySchema:
+        - AttributeName: 'follower_alias'
+          KeyType: 'HASH' # Primary Key
+        - AttributeName: 'followee_alias'
+          KeyType: 'RANGE' # Sort Key
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 25
+        WriteCapacityUnits: 25
+      SSESpecification:
+        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+
   UserTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:

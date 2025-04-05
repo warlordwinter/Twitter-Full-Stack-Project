@@ -41,19 +41,7 @@ export class AuthenticationService {
       imageStringBase64,
       imageFileExtension
     );
-    const user = User.fromDto(userDto);
-    if (user === null) {
-      throw new Error('Invalid registration');
-    }
-    this.authDao.register(
-      firstName,
-      lastName,
-      alias,
-      password,
-      imageStringBase64,
-      imageFileExtension
-    );
-    return [user, authTokenDto];
+    return [userDto, authTokenDto];
   }
 
   public async logout(authToken: AuthTokenDto): Promise<void> {

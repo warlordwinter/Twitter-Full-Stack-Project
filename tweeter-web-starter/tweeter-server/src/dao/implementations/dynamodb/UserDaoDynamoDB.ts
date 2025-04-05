@@ -4,10 +4,11 @@ import {
   GetCommand,
   PutCommand,
   UpdateCommand,
+  QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { IUserDao } from '../../interfaces/IUserDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { UserDto } from 'tweeter-shared';
+import { User, UserDto } from 'tweeter-shared';
 
 export class UserDaoDynamoDB implements IUserDao {
   private readonly dynamoClient;
@@ -61,36 +62,34 @@ export class UserDaoDynamoDB implements IUserDao {
     console.log('user in getFolloweeCount', user);
 
     const result = await this.dynamoClient.send(
-      new GetCommand({
+      new QueryCommand({
         TableName: this.followTable,
-        Key: {
-          follower_alias: user.alias, // TODO: Check if this is correct
+        KeyConditionExpression: 'follower_alias = :follower',
+        ExpressionAttributeValues: {
+          ':follower': user.alias,
         },
+        Select: 'COUNT',
       })
     );
-    const followeeCount = result.Item?.followee_count;
-    if (!followeeCount) {
-      throw new Error('Followee count not found');
-    }
-    return followeeCount;
+    return result.Count ?? 0;
   }
   async getFollowerCount(token: string, user: UserDto): Promise<number> {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
+
     const result = await this.dynamoClient.send(
-      new GetCommand({
+      new QueryCommand({
         TableName: this.followTable,
-        Key: {
-          follower_alias: user.alias, // TODO: Check if this is correct
+        IndexName: 'followee_alias-index', // You'll need to create this index
+        KeyConditionExpression: 'followee_alias = :followee',
+        ExpressionAttributeValues: {
+          ':followee': user.alias,
         },
+        Select: 'COUNT',
       })
     );
-    const followeeCount = result.Item?.followee_count;
-    if (!followeeCount) {
-      throw new Error('Follower count not found');
-    }
-    return followeeCount;
+    return result.Count ?? 0;
   }
 
   async unfollow(
@@ -177,7 +176,7 @@ export class UserDaoDynamoDB implements IUserDao {
     return [followerCount, followeeCount];
   }
 
-  async getUser(token: string, alias: string): Promise<UserDto | null> {
+  async getUser(token: string, alias: string): Promise<User | null> {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
@@ -188,6 +187,6 @@ export class UserDaoDynamoDB implements IUserDao {
         Key: { alias },
       })
     );
-    return result.Item as UserDto | null;
+    return result.Item as User | null;
   }
 }

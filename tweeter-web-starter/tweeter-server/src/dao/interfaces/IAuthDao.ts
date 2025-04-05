@@ -1,6 +1,4 @@
-import { UserDto } from 'tweeter-shared';
-
-import { AuthTokenDto } from 'tweeter-shared';
+import { AuthTokenDto, UserDto } from 'tweeter-shared';
 
 export interface IAuthDao {
   login(alias: string, password: string): Promise<[UserDto, AuthTokenDto]>;

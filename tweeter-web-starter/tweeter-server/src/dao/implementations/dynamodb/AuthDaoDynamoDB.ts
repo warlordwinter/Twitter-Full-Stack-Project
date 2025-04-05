@@ -10,6 +10,7 @@ import {
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
 export class AuthDaoDynamoDB implements IAuthDao {
   private readonly dynamoClient;
   private readonly s3Client;
@@ -117,12 +118,12 @@ export class AuthDaoDynamoDB implements IAuthDao {
   }
 
   async logout(authToken: AuthTokenDto): Promise<void> {
-    const deleteCommand = new DeleteCommand({
-      TableName: this.authTokenTable,
-      Key: { token: authToken.token },
-    });
-
-    await this.dynamoClient.send(deleteCommand);
+    await this.dynamoClient.send(
+      new DeleteCommand({
+        TableName: this.authTokenTable,
+        Key: { token: authToken.token },
+      })
+    );
   }
 
   async login(

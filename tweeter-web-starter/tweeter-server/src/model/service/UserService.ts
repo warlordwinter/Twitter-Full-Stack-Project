@@ -1,4 +1,4 @@
-import { UserDto } from 'tweeter-shared';
+import { User, UserDto } from 'tweeter-shared';
 import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
 import { IUserDao } from '../../dao/interfaces/IUserDao';
 
@@ -11,9 +11,13 @@ export class UserService {
 
   public async getIsFollowerStatus(
     token: string,
-    user: UserDto,
+    userDto: UserDto,
     selectedUser: UserDto
   ): Promise<boolean> {
+    const user = User.fromDto(userDto);
+    if (user === null) {
+      throw new Error('Invalid alias or password');
+    }
     return this.followDao.getIsFollowerStatus(token, user, selectedUser);
   }
 

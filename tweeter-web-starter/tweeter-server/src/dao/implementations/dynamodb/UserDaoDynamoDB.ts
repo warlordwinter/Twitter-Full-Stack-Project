@@ -60,19 +60,23 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
-    console.log('user in getFolloweeCount', user);
 
-    const result = await this.dynamoClient.send(
-      new QueryCommand({
-        TableName: this.followTable,
-        KeyConditionExpression: 'follower_handle = :follower',
-        ExpressionAttributeValues: {
-          ':follower': user.alias,
-        },
-        Select: 'COUNT',
-      })
-    );
-    return result.Count ?? 0;
+    try {
+      const result = await this.dynamoClient.send(
+        new QueryCommand({
+          TableName: this.followTable,
+          KeyConditionExpression: 'follower_handle = :follower',
+          ExpressionAttributeValues: {
+            ':follower': user.alias,
+          },
+          Select: 'COUNT',
+        })
+      );
+      return result.Count || 0;
+    } catch (error) {
+      console.error('Error getting followee count:', error);
+      return 0;
+    }
   }
 
   async getFollowerCount(token: string, user: UserDto): Promise<number> {
@@ -80,18 +84,23 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('Invalid token');
     }
 
-    const result = await this.dynamoClient.send(
-      new QueryCommand({
-        TableName: this.followTable,
-        IndexName: 'follows_index',
-        KeyConditionExpression: 'followee_handle = :followee',
-        ExpressionAttributeValues: {
-          ':followee': user.alias,
-        },
-        Select: 'COUNT',
-      })
-    );
-    return result.Count ?? 0;
+    try {
+      const result = await this.dynamoClient.send(
+        new QueryCommand({
+          TableName: this.followTable,
+          IndexName: 'follows_index',
+          KeyConditionExpression: 'followee_handle = :followee',
+          ExpressionAttributeValues: {
+            ':followee': user.alias,
+          },
+          Select: 'COUNT',
+        })
+      );
+      return result.Count || 0;
+    } catch (error) {
+      console.error('Error getting follower count:', error);
+      return 0;
+    }
   }
 
   async unfollow(

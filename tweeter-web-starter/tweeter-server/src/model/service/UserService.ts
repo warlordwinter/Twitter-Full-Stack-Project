@@ -6,7 +6,7 @@ export class UserService {
   private followDao: IUserDao;
 
   constructor(daoFactory: IDaoFactory) {
-    this.followDao = daoFactory.createFollowDao();
+    this.followDao = daoFactory.createUserDao();
   }
 
   public async getIsFollowerStatus(

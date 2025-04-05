@@ -58,15 +58,15 @@ export class StatusService {
     return this.serverFacade.postStatus(request);
   }
 
-  private async getFakeData(
-    lastItem: StatusDto | null,
-    pageSize: number
-  ): Promise<[StatusDto[], boolean]> {
-    const [items, hasMore] = FakeData.instance.getPageOfStatuses(
-      Status.fromDto(lastItem),
-      pageSize
-    );
-    const dtos = items.map(status => status.dto);
-    return [dtos, hasMore];
-  }
+  // private async getFakeData(
+  //   lastItem: StatusDto | null,
+  //   pageSize: number
+  // ): Promise<[StatusDto[], boolean]> {
+  //   const [items, hasMore] = FakeData.instance.getPageOfStatuses(
+  //     Status.fromDto(lastItem),
+  //     pageSize
+  //   );
+  //   const dtos = items.map(status => status.dto);
+  //   return [dtos, hasMore];
+  // }
 }

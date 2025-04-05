@@ -39,16 +39,16 @@ export class FollowService {
     return await this.serverFacade.getMoreFollowees(request);
   }
 
-  private async getFakeData(
-    lastItem: User | null,
-    pageSize: number,
-    userAlias: string
-  ): Promise<[User[], boolean]> {
-    const [items, hasMore] = FakeData.instance.getPageOfUsers(
-      User.fromDto(lastItem),
-      pageSize,
-      userAlias
-    );
-    return [items, hasMore];
-  }
+  // private async getFakeData(
+  //   lastItem: User | null,
+  //   pageSize: number,
+  //   userAlias: string
+  // ): Promise<[User[], boolean]> {
+  //   const [items, hasMore] = FakeData.instance.getPageOfUsers(
+  //     User.fromDto(lastItem),
+  //     pageSize,
+  //     userAlias
+  //   );
+  //   return [items, hasMore];
+  // }
 }

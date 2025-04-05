@@ -9,11 +9,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import {
-  S3Client,
-  PutObjectCommand,
-  ObjectCannedACL,
-} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 export class AuthDaoDynamoDB implements IAuthDao {
   private readonly dynamoClient;
   private readonly s3Client;

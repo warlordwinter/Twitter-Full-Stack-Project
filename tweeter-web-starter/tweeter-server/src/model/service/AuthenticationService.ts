@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { User, AuthToken } from 'tweeter-shared';
+import { User, AuthToken, UserDto } from 'tweeter-shared';
 import { AuthTokenDto } from 'tweeter-shared/src/model/dto/AuthTokenDto';
 import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
 import { IAuthDao } from '../../dao/interfaces/IAuthDao';
@@ -30,7 +30,7 @@ export class AuthenticationService {
     password: string,
     userImageBytes: Uint8Array,
     imageFileExtension: string
-  ): Promise<[User, AuthTokenDto]> {
+  ): Promise<[UserDto, AuthTokenDto]> {
     const imageStringBase64: string =
       Buffer.from(userImageBytes).toString('base64');
     const [userDto, authTokenDto] = await this.authDao.register(

@@ -10,7 +10,7 @@ export const handler = async (
     new DyanmoDBFactory()
   );
   // register is working correctly
-  const [user, authTokenDto] = await authenticationService.register(
+  const [userDto, authTokenDto] = await authenticationService.register(
     requests.firstName,
     requests.lastName,
     requests.alias,
@@ -18,12 +18,12 @@ export const handler = async (
     requests.userImageBytes,
     requests.imageFileExtension
   );
-  console.log('user', user);
+  console.log('user', userDto);
   console.log('Authtoken');
   return {
     success: true,
     message: null,
-    user: user.dto,
+    user: userDto,
     authToken: authTokenDto,
   };
 };

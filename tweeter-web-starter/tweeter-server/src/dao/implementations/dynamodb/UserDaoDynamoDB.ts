@@ -48,13 +48,14 @@ export class UserDaoDynamoDB implements IUserDao {
       new GetCommand({
         TableName: this.followTable,
         Key: {
-          follower_alias: user.alias,
-          followee_alias: selectedUser.alias,
+          follower_handle: user.alias,
+          followee_handle: selectedUser.alias,
         },
       })
     );
     return result.Item !== undefined;
   }
+
   async getFolloweeCount(token: string, user: UserDto): Promise<number> {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
@@ -64,7 +65,7 @@ export class UserDaoDynamoDB implements IUserDao {
     const result = await this.dynamoClient.send(
       new QueryCommand({
         TableName: this.followTable,
-        KeyConditionExpression: 'follower_alias = :follower',
+        KeyConditionExpression: 'follower_handle = :follower',
         ExpressionAttributeValues: {
           ':follower': user.alias,
         },
@@ -73,6 +74,7 @@ export class UserDaoDynamoDB implements IUserDao {
     );
     return result.Count ?? 0;
   }
+
   async getFollowerCount(token: string, user: UserDto): Promise<number> {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
@@ -81,8 +83,8 @@ export class UserDaoDynamoDB implements IUserDao {
     const result = await this.dynamoClient.send(
       new QueryCommand({
         TableName: this.followTable,
-        IndexName: 'followee_alias-index', // You'll need to create this index
-        KeyConditionExpression: 'followee_alias = :followee',
+        IndexName: 'follows_index',
+        KeyConditionExpression: 'followee_handle = :followee',
         ExpressionAttributeValues: {
           ':followee': user.alias,
         },
@@ -99,41 +101,28 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
+
     const user = await this.getUser(token, userToUnfollow.alias);
-    console.log('user in unfollow', user);
     if (!user) {
       throw new Error('User not found in unfollow action');
     }
 
-    const result = await this.dynamoClient.send(
-      new GetCommand({
+    await this.dynamoClient.send(
+      new DeleteCommand({
         TableName: this.followTable,
         Key: {
-          follower_alias: user.alias,
-          followee_alias: userToUnfollow.alias,
+          follower_handle: user.alias,
+          followee_handle: userToUnfollow.alias,
         },
       })
     );
-    if (result.Item) {
-      await this.dynamoClient.send(
-        new UpdateCommand({
-          TableName: this.followTable,
-          Key: {
-            follower_alias: user.alias,
-            followee_alias: userToUnfollow.alias, // TODO: Check if this is correct
-          },
-          UpdateExpression: 'SET followee_count = followee_count - :dec',
-          ExpressionAttributeValues: {
-            ':dec': 1,
-          },
-        })
-      );
-    }
-    const followerCount = await this.getFollowerCount(token, user);
+
+    const followerCount = await this.getFollowerCount(token, userToUnfollow);
     const followeeCount = await this.getFolloweeCount(token, user);
 
     return [followerCount, followeeCount];
   }
+
   async follow(
     token: string,
     userToFollow: UserDto
@@ -141,36 +130,25 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!(await this.authenticate(token))) {
       throw new Error('Invalid token');
     }
+
     const user = await this.getUser(token, userToFollow.alias);
     if (!user) {
       throw new Error('User not found in follow action');
     }
-    const result = await this.dynamoClient.send(
-      new GetCommand({
-        TableName: this.followTable,
-        Key: {
-          follower_alias: user.alias,
-          followee_alias: userToFollow.alias, // TODO: Check if this is correct
-        },
-      })
-    );
-    if (result.Item) {
-      throw new Error('User already followed');
-    }
+
     await this.dynamoClient.send(
-      new UpdateCommand({
+      new PutCommand({
         TableName: this.followTable,
-        Key: {
-          follower_alias: user.alias,
-          followee_alias: userToFollow.alias,
-        },
-        UpdateExpression: 'SET followee_count = followee_count + :inc',
-        ExpressionAttributeValues: {
-          ':inc': 1,
+        Item: {
+          follower_handle: user.alias,
+          followee_handle: userToFollow.alias,
+          follower_name: user.firstName + ' ' + user.lastName,
+          followee_name: userToFollow.firstName + ' ' + userToFollow.lastName,
         },
       })
     );
-    const followerCount = await this.getFollowerCount(token, user);
+
+    const followerCount = await this.getFollowerCount(token, userToFollow);
     const followeeCount = await this.getFolloweeCount(token, user);
 
     return [followerCount, followeeCount];

@@ -9,13 +9,15 @@ import {
 import { IUserDao } from '../../interfaces/IUserDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { User, UserDto } from 'tweeter-shared';
+import { IAuthenticator } from '../../interfaces/IAuthenticator';
+import { DynamoDBAuthenticator } from './DynamoDBAuthenticator';
 
 export class UserDaoDynamoDB implements IUserDao {
   private readonly dynamoClient;
   private readonly followTable: string;
   private readonly userTable: string;
-  private readonly authTable: string;
   private readonly region: string = 'us-west-2';
+  private readonly authenticator: IAuthenticator;
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(
@@ -23,17 +25,7 @@ export class UserDaoDynamoDB implements IUserDao {
     );
     this.followTable = 'follow';
     this.userTable = 'user';
-    this.authTable = 'authtoken';
-  }
-
-  async authenticate(token: string): Promise<boolean> {
-    const result = await this.dynamoClient.send(
-      new GetCommand({
-        TableName: this.authTable,
-        Key: { token },
-      })
-    );
-    return result.Item !== undefined;
+    this.authenticator = new DynamoDBAuthenticator();
   }
 
   async getIsFollowerStatus(
@@ -41,7 +33,7 @@ export class UserDaoDynamoDB implements IUserDao {
     user: UserDto,
     selectedUser: UserDto
   ): Promise<boolean> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
     const result = await this.dynamoClient.send(
@@ -57,7 +49,7 @@ export class UserDaoDynamoDB implements IUserDao {
   }
 
   async getFolloweeCount(token: string, user: UserDto): Promise<number> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
 
@@ -69,7 +61,7 @@ export class UserDaoDynamoDB implements IUserDao {
           ExpressionAttributeValues: {
             ':follower': user.alias,
           },
-          Select: 'COUNT',
+          Select: 'COUNT' as const,
         })
       );
       return result.Count || 0;
@@ -80,7 +72,7 @@ export class UserDaoDynamoDB implements IUserDao {
   }
 
   async getFollowerCount(token: string, user: UserDto): Promise<number> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
 
@@ -93,7 +85,7 @@ export class UserDaoDynamoDB implements IUserDao {
           ExpressionAttributeValues: {
             ':followee': user.alias,
           },
-          Select: 'COUNT',
+          Select: 'COUNT' as const,
         })
       );
       return result.Count || 0;
@@ -107,7 +99,7 @@ export class UserDaoDynamoDB implements IUserDao {
     token: string,
     userToUnfollow: UserDto
   ): Promise<[followerCount: number, followeeCount: number]> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
 
@@ -136,7 +128,7 @@ export class UserDaoDynamoDB implements IUserDao {
     token: string,
     userToFollow: UserDto
   ): Promise<[followerCount: number, followeeCount: number]> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
 
@@ -164,7 +156,7 @@ export class UserDaoDynamoDB implements IUserDao {
   }
 
   async getUser(token: string, alias: string): Promise<User | null> {
-    if (!(await this.authenticate(token))) {
+    if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
     console.log('alias in getUser', alias);

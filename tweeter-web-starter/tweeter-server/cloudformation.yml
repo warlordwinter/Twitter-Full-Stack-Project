@@ -35,32 +35,37 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
-  FollowTable:
-    Type: 'AWS::DynamoDB::Table'
+  FollowsTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      TableName: 'follow'
+      TableName: follows-us-west-2
+      BillingMode: PROVISIONED
       AttributeDefinitions:
-        - AttributeName: 'follower_handle'
-          AttributeType: 'S'
-        - AttributeName: 'followee_handle'
-          AttributeType: 'S'
+        - AttributeName: follower_handle
+          AttributeType: S
+        - AttributeName: followee_handle
+          AttributeType: S
       KeySchema:
-        - AttributeName: 'follower_handle'
-          KeyType: 'HASH'
-        - AttributeName: 'followee_handle'
-          KeyType: 'RANGE'
+        - AttributeName: follower_handle
+          KeyType: HASH
+        - AttributeName: followee_handle
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       GlobalSecondaryIndexes:
-        - IndexName: 'follows_index'
+        - IndexName: follows_index
           KeySchema:
-            - AttributeName: 'followee_handle'
-              KeyType: 'HASH'
-            - AttributeName: 'follower_handle'
-              KeyType: 'RANGE'
+            - AttributeName: followee_handle
+              KeyType: HASH
+            - AttributeName: follower_handle
+              KeyType: RANGE
           Projection:
-            ProjectionType: 'ALL'
-      BillingMode: PAY_PER_REQUEST
-      SSESpecification:
-        SSEEnabled: true
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      TableClass: STANDARD
 
   UserTable:
     Type: 'AWS::DynamoDB::Table'

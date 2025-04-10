@@ -22,7 +22,7 @@ export class UserDaoDynamoDB implements IUserDao {
     this.dynamoClient = DynamoDBDocumentClient.from(
       new DynamoDBClient({ region: this.region })
     );
-    this.followTable = 'follow';
+    this.followTable = 'follows-us-west-2';
     this.userTable = 'user';
     this.authenticator = new DynamoDBAuthenticator();
   }

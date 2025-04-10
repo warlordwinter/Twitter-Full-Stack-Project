@@ -15,18 +15,23 @@ export class DynamoDBAuthenticator implements IAuthenticator {
   }
 
   async lookup(token: string): Promise<string> {
-    const result = await this.dynamoClient.send(
-      new GetCommand({
-        TableName: this.authTable,
-        Key: { token },
-      })
-    );
+    try {
+      const result = await this.dynamoClient.send(
+        new GetCommand({
+          TableName: this.authTable,
+          Key: { token },
+        })
+      );
 
-    if (!result.Item?.alias) {
-      throw new Error('Token not found');
+      if (!result.Item?.alias) {
+        throw new Error('Token not found');
+      }
+
+      return result.Item.alias;
+    } catch (error) {
+      console.error('Error in token lookup:', error);
+      throw new Error('Token lookup failed');
     }
-
-    return result.Item.alias;
   }
 
   async authenticate(token: string): Promise<boolean> {

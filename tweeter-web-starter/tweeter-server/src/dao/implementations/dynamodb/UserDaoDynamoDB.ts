@@ -163,7 +163,9 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('Invalid token');
     }
 
-    const user = await this.getUser(token, userToFollow.alias);
+    const current_alias = await this.authenticator.lookup(token);
+
+    const user = await this.getUser(current_alias, userToFollow.alias);
     if (!user) {
       throw new Error('User not found in follow action');
     }
@@ -173,7 +175,7 @@ export class UserDaoDynamoDB implements IUserDao {
       new UpdateCommand({
         TableName: this.followTable,
         Key: {
-          follower_handle: userToFollow.alias,
+          follower_handle: user.alias,
           followee_handle: userToFollow.alias,
         },
         UpdateExpression:

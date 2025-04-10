@@ -29,7 +29,7 @@ import { TweeterRequest } from 'tweeter-shared/dist/model/net/request/TweeterReq
 
 export class ServerFacade {
   private SERVER_URL =
-    'https://111ommkrm1.execute-api.us-west-2.amazonaws.com/prod';
+    'https://3gp9vu1txe.execute-api.us-west-2.amazonaws.com/prod';
 
   private clientCommunicator = new ClientCommunicator(this.SERVER_URL);
 

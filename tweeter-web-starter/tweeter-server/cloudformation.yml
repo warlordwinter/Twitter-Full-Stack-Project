@@ -46,6 +46,10 @@ Resources:
           AttributeType: 'S'
         - AttributeName: 'followee_alias'
           AttributeType: 'S'
+        - AttributeName: 'follower_count'
+          AttributeType: 'N'
+        - AttributeName: 'followee_count'
+          AttributeType: 'N'
       KeySchema:
         - AttributeName: 'follower_alias'
           KeyType: 'HASH'

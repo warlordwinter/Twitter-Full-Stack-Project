@@ -29,18 +29,4 @@ export class FollowService {
     // TODO: Replace with the result of calling server
     return this.followDao.getFollowees(token, userAlias, pageSize, lastItem);
   }
-
-  // private async getFakeData(
-  //   lastItem: UserDto | null,
-  //   pageSize: number,
-  //   userAlias: string
-  // ): Promise<[UserDto[], boolean]> {
-  //   const [items, hasMore] = FakeData.instance.getPageOfUsers(
-  //     User.fromDto(lastItem),
-  //     pageSize,
-  //     userAlias
-  //   );
-  //   const dtos = items.map(user => user.dto);
-  //   return [dtos, hasMore];
-  // }
 }

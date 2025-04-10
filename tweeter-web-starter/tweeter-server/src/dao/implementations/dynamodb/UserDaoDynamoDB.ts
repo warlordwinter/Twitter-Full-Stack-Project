@@ -55,16 +55,17 @@ export class UserDaoDynamoDB implements IUserDao {
 
     try {
       const result = await this.dynamoClient.send(
-        new QueryCommand({
+        new GetCommand({
           TableName: this.followTable,
-          KeyConditionExpression: 'follower_handle = :follower',
-          ExpressionAttributeValues: {
-            ':follower': user.alias,
+          Key: {
+            follower_handle: user.alias,
+            followee_handle: user.alias,
           },
-          Select: 'COUNT' as const,
+          ProjectionExpression: 'followee_count',
         })
       );
-      return result.Count || 0;
+
+      return result.Item?.followee_count || 0;
     } catch (error) {
       console.error('Error getting followee count:', error);
       return 0;
@@ -78,17 +79,17 @@ export class UserDaoDynamoDB implements IUserDao {
 
     try {
       const result = await this.dynamoClient.send(
-        new QueryCommand({
+        new GetCommand({
           TableName: this.followTable,
-          IndexName: 'follows_index',
-          KeyConditionExpression: 'followee_handle = :followee',
-          ExpressionAttributeValues: {
-            ':followee': user.alias,
+          Key: {
+            follower_handle: user.alias,
+            followee_handle: user.alias,
           },
-          Select: 'COUNT' as const,
+          ProjectionExpression: 'follower_count',
         })
       );
-      return result.Count || 0;
+
+      return result.Item?.follower_count || 0;
     } catch (error) {
       console.error('Error getting follower count:', error);
       return 0;
@@ -137,6 +138,7 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('User not found in follow action');
     }
 
+    // Create the follow relationship
     await this.dynamoClient.send(
       new PutCommand({
         TableName: this.followTable,
@@ -149,6 +151,41 @@ export class UserDaoDynamoDB implements IUserDao {
       })
     );
 
+    // Increment follower count for the followee
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: userToFollow.alias,
+          followee_handle: userToFollow.alias,
+        },
+        UpdateExpression:
+          'SET follower_count = if_not_exists(follower_count, :zero) + :inc',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+          ':inc': 1,
+        },
+      })
+    );
+
+    // Increment followee count for the follower
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: user.alias,
+          followee_handle: user.alias,
+        },
+        UpdateExpression:
+          'SET followee_count = if_not_exists(followee_count, :zero) + :inc',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+          ':inc': 1,
+        },
+      })
+    );
+
+    // Get the updated counts
     const followerCount = await this.getFollowerCount(token, userToFollow);
     const followeeCount = await this.getFolloweeCount(token, user);
 

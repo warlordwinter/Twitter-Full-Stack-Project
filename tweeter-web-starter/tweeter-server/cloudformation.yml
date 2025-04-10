@@ -21,25 +21,19 @@ Parameters:
 
 Resources:
   # AWS Dynamo Tables
-  AuthTokenTable:
+  AuthTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       TableName: 'authtoken'
       AttributeDefinitions:
         - AttributeName: 'token'
-          AttributeType: 'S' # Primary key for token lookups
+          AttributeType: 'S'
       KeySchema:
         - AttributeName: 'token'
-          KeyType: 'HASH' # Primary Key
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TimeToLiveSpecification:
-        AttributeName: 'timestamp' # Items will be automatically deleted when this timestamp is reached
-        Enabled: true
+          KeyType: 'HASH'
+      BillingMode: PAY_PER_REQUEST
       SSESpecification:
-        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+        SSEEnabled: true
 
   FollowTable:
     Type: 'AWS::DynamoDB::Table'
@@ -64,13 +58,7 @@ Resources:
               KeyType: 'RANGE'
           Projection:
             ProjectionType: 'ALL'
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: true
 
@@ -80,33 +68,31 @@ Resources:
       TableName: 'user'
       AttributeDefinitions:
         - AttributeName: 'alias'
-          AttributeType: 'S' # Primary key for user lookups
+          AttributeType: 'S'
       KeySchema:
         - AttributeName: 'alias'
-          KeyType: 'HASH' # Primary Key
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+          KeyType: 'HASH'
+      BillingMode: PAY_PER_REQUEST
       SSESpecification:
-        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+        SSEEnabled: true
 
-  # StoryTable:
-  #   Type: 'AWS::DynamoDB::Table'
-  #   Properties:
-  #     TableName: 'story'
-  #     AttributeDefinitions:
-  #       - AttributeName: 'alias'
-  #         AttributeType: 'S' # Primary key for user lookups
-  #     KeySchema:
-  #       - AttributeName: 'timestamp'
-  #         KeyType: 'HASH' # Primary Key
-  #     BillingMode: PROVISIONED
-  #     ProvisionedThroughput:
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-  #     SSESpecification:
-  #       SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+  StoryTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'story'
+      AttributeDefinitions:
+        - AttributeName: 'sender_alias'
+          AttributeType: 'S'
+        - AttributeName: 'timestamp'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'sender_alias'
+          KeyType: 'HASH'
+        - AttributeName: 'timestamp'
+          KeyType: 'RANGE'
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
 
   # Lambda Layer for shared code
   TweeterSharedLayer:

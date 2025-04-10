@@ -16,7 +16,7 @@ export class StatusService {
     pageSize: number,
     lastItem: StatusDto | null
   ): Promise<[StatusDto[], boolean]> {
-    return this.getFakeData(lastItem, pageSize);
+    return this.statusDao.getFeed(token, userAlias, pageSize, lastItem);
   }
 
   public async loadMoreStory(
@@ -25,7 +25,7 @@ export class StatusService {
     pageSize: number,
     lastItem: StatusDto | null
   ): Promise<[StatusDto[], boolean]> {
-    return this.getFakeData(lastItem, pageSize);
+    return this.statusDao.getStory(token, userAlias, pageSize, lastItem);
   }
 
   public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
@@ -36,17 +36,5 @@ export class StatusService {
       console.log('error in service');
     }
     // TODO: Call the server to post the status
-  }
-
-  private async getFakeData(
-    lastItem: StatusDto | null,
-    pageSize: number
-  ): Promise<[StatusDto[], boolean]> {
-    const [items, hasMore] = FakeData.instance.getPageOfStatuses(
-      Status.fromDto(lastItem),
-      pageSize
-    );
-    const dtos = items.map(status => status.dto);
-    return [dtos, hasMore];
   }
 }

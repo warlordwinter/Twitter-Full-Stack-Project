@@ -33,34 +33,46 @@ Resources:
           KeyType: 'HASH' # Primary Key
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 25
-        WriteCapacityUnits: 25
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
       TimeToLiveSpecification:
         AttributeName: 'timestamp' # Items will be automatically deleted when this timestamp is reached
         Enabled: true
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
-  FollowTable:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      TableName: 'follow'
-      AttributeDefinitions:
-        - AttributeName: 'follower_alias'
-          AttributeType: 'S' # Primary key for follower
-        - AttributeName: 'followee_alias'
-          AttributeType: 'S' # Secondary key for followee
-      KeySchema:
-        - AttributeName: 'follower_alias'
-          KeyType: 'HASH' # Primary Key
-        - AttributeName: 'followee_alias'
-          KeyType: 'RANGE' # Sort Key
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 25
-        WriteCapacityUnits: 25
-      SSESpecification:
-        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+FollowTable:
+  Type: 'AWS::DynamoDB::Table'
+  Properties:
+    TableName: 'follow'
+    AttributeDefinitions:
+      - AttributeName: 'follower_alias'
+        AttributeType: 'S'
+      - AttributeName: 'followee_alias'
+        AttributeType: 'S'
+    KeySchema:
+      - AttributeName: 'follower_alias'
+        KeyType: 'HASH'
+      - AttributeName: 'followee_alias'
+        KeyType: 'RANGE'
+    GlobalSecondaryIndexes:
+      - IndexName: 'followee_alias-index'
+        KeySchema:
+          - AttributeName: 'followee_alias'
+            KeyType: 'HASH'
+          - AttributeName: 'follower_alias'
+            KeyType: 'RANGE'
+        Projection:
+          ProjectionType: 'ALL'
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    BillingMode: PROVISIONED
+    ProvisionedThroughput:
+      ReadCapacityUnits: 5
+      WriteCapacityUnits: 5
+    SSESpecification:
+      SSEEnabled: true
 
   UserTable:
     Type: 'AWS::DynamoDB::Table'
@@ -74,43 +86,57 @@ Resources:
           KeyType: 'HASH' # Primary Key
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 25
-        WriteCapacityUnits: 25
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
-  FollowsTable:
+  StoryTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'follows'
+      TableName: 'story'
       AttributeDefinitions:
-        - AttributeName: 'follower_handle'
-          AttributeType: 'S'
-        - AttributeName: 'followee_handle'
-          AttributeType: 'S'
+        - AttributeName: 'alias'
+          AttributeType: 'S' # Primary key for user lookups
       KeySchema:
-        - AttributeName: 'follower_handle'
-          KeyType: 'HASH'
-        - AttributeName: 'followee_handle'
-          KeyType: 'RANGE'
-      GlobalSecondaryIndexes:
-        - IndexName: 'follows_index'
-          KeySchema:
-            - AttributeName: 'followee_handle'
-              KeyType: 'HASH'
-            - AttributeName: 'follower_handle'
-              KeyType: 'RANGE'
-          Projection:
-            ProjectionType: 'ALL'
-          ProvisionedThroughput:
-            ReadCapacityUnits: 25
-            WriteCapacityUnits: 25
+        - AttributeName: 'timestamp'
+          KeyType: 'HASH' # Primary Key
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 25
-        WriteCapacityUnits: 25
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
       SSESpecification:
-        SSEEnabled: true
+        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+
+FollowsTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: follows
+    ProvisionedThroughput:
+      ReadCapacityUnits: 5
+      WriteCapacityUnits: 5
+    AttributeDefinitions:
+      - AttributeName: follower_handle
+        AttributeType: S
+      - AttributeName: followee_handle
+        AttributeType: S
+    KeySchema:
+      - AttributeName: follower_handle
+        KeyType: HASH
+      - AttributeName: followee_handle
+        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: follows_index
+        KeySchema:
+          - AttributeName: follower_handle
+            KeyType: HASH
+          - AttributeName: followee_handle
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
 
   # Lambda Layer for shared code
   TweeterSharedLayer:

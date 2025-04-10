@@ -1301,42 +1301,24 @@ Resources:
 
   # Follow Lambda
   FollowLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
     Properties:
-      CodeUri: tweeter-server/
-      Handler: lambda/follow.handler
-      Runtime: nodejs18.x
-      Architectures:
-        - arm64
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref FollowsTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref UserTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref AuthTable
+      FunctionName: !Sub FollowLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/follow/FollowLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
       Environment:
         Variables:
           FOLLOW_TABLE: !Ref FollowsTable
           USER_TABLE: !Ref UserTable
           AUTH_TABLE: !Ref AuthTable
-      Events:
-        Follow:
-          Type: Api
-          Properties:
-            Path: /follow
-            Method: post
-            RestApiId: !Ref TweeterApi
-            Auth:
-              Authorizer: TweeterAuthorizer
-        Unfollow:
-          Type: Api
-          Properties:
-            Path: /unfollow
-            Method: post
-            RestApiId: !Ref TweeterApi
-            Auth:
-              Authorizer: TweeterAuthorizer
 
   # API Gateway Resources for Follow
   FollowResource:

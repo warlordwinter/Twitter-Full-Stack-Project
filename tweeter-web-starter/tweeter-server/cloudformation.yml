@@ -188,9 +188,10 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  - !Sub arn:aws:s3:::wiley-tweeter-image-storage/*
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story
 
   # API Gateway
   TweeterApi:
@@ -1300,19 +1301,42 @@ Resources:
 
   # Follow Lambda
   FollowLambda:
-    Type: AWS::Lambda::Function
+    Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub FollowLambda-${Timestamp}
-      Code:
-        S3Bucket: !Ref S3Bucket
-        S3Key: !Ref LambdasKey
-      Handler: lambda/follow/FollowLambda.handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: nodejs20.x
-      Layers:
-        - !Ref TweeterSharedLayer
-      Timeout: 30
-      MemorySize: 128
+      CodeUri: tweeter-server/
+      Handler: lambda/follow.handler
+      Runtime: nodejs18.x
+      Architectures:
+        - arm64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FollowTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AuthTable
+      Environment:
+        Variables:
+          FOLLOW_TABLE: !Ref FollowTable
+          USER_TABLE: !Ref UserTable
+          AUTH_TABLE: !Ref AuthTable
+      Events:
+        Follow:
+          Type: Api
+          Properties:
+            Path: /follow
+            Method: post
+            RestApiId: !Ref TweeterApi
+            Auth:
+              Authorizer: TweeterAuthorizer
+        Unfollow:
+          Type: Api
+          Properties:
+            Path: /unfollow
+            Method: post
+            RestApiId: !Ref TweeterApi
+            Auth:
+              Authorizer: TweeterAuthorizer
 
   # API Gateway Resources for Follow
   FollowResource:

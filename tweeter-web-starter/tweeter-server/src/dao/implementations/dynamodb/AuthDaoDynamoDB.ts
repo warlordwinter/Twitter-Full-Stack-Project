@@ -108,6 +108,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       TableName: this.authTokenTable,
       Item: {
         token: authToken,
+        alias: alias,
         expiresAt,
       },
     });
@@ -159,6 +160,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
       TableName: this.authTokenTable,
       Item: {
         token: authToken,
+        alias: alias,
         expiresAt,
       },
     });

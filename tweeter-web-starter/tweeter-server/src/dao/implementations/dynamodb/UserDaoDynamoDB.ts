@@ -250,9 +250,7 @@ export class UserDaoDynamoDB implements IUserDao {
   }
 
   async getUser(token: string, alias: string): Promise<User | null> {
-    if (!(await this.authenticator.authenticate(token))) {
-      throw new Error('Invalid token');
-    }
+    console.log('token in getUser', token);
     console.log('alias in getUser', alias);
     const result = await this.dynamoClient.send(
       new GetCommand({

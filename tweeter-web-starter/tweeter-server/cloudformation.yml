@@ -91,22 +91,22 @@ Resources:
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
-  StoryTable:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      TableName: 'story'
-      AttributeDefinitions:
-        - AttributeName: 'alias'
-          AttributeType: 'S' # Primary key for user lookups
-      KeySchema:
-        - AttributeName: 'timestamp'
-          KeyType: 'HASH' # Primary Key
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      SSESpecification:
-        SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
+  # StoryTable:
+  #   Type: 'AWS::DynamoDB::Table'
+  #   Properties:
+  #     TableName: 'story'
+  #     AttributeDefinitions:
+  #       - AttributeName: 'alias'
+  #         AttributeType: 'S' # Primary key for user lookups
+  #     KeySchema:
+  #       - AttributeName: 'timestamp'
+  #         KeyType: 'HASH' # Primary Key
+  #     BillingMode: PROVISIONED
+  #     ProvisionedThroughput:
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+  #     SSESpecification:
+  #       SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
   # Lambda Layer for shared code
   TweeterSharedLayer:

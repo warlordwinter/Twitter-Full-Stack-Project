@@ -41,38 +41,38 @@ Resources:
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
-FollowTable:
-  Type: 'AWS::DynamoDB::Table'
-  Properties:
-    TableName: 'follow'
-    AttributeDefinitions:
-      - AttributeName: 'follower_alias'
-        AttributeType: 'S'
-      - AttributeName: 'followee_alias'
-        AttributeType: 'S'
-    KeySchema:
-      - AttributeName: 'follower_alias'
-        KeyType: 'HASH'
-      - AttributeName: 'followee_alias'
-        KeyType: 'RANGE'
-    GlobalSecondaryIndexes:
-      - IndexName: 'followee_alias-index'
-        KeySchema:
-          - AttributeName: 'followee_alias'
-            KeyType: 'HASH'
-          - AttributeName: 'follower_alias'
-            KeyType: 'RANGE'
-        Projection:
-          ProjectionType: 'ALL'
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-    BillingMode: PROVISIONED
-    ProvisionedThroughput:
-      ReadCapacityUnits: 5
-      WriteCapacityUnits: 5
-    SSESpecification:
-      SSEEnabled: true
+  FollowTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'follow'
+      AttributeDefinitions:
+        - AttributeName: 'follower_alias'
+          AttributeType: 'S'
+        - AttributeName: 'followee_alias'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'follower_alias'
+          KeyType: 'HASH'
+        - AttributeName: 'followee_alias'
+          KeyType: 'RANGE'
+      GlobalSecondaryIndexes:
+        - IndexName: 'followee_alias-index'
+          KeySchema:
+            - AttributeName: 'followee_alias'
+              KeyType: 'HASH'
+            - AttributeName: 'follower_alias'
+              KeyType: 'RANGE'
+          Projection:
+            ProjectionType: 'ALL'
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
 
   UserTable:
     Type: 'AWS::DynamoDB::Table'

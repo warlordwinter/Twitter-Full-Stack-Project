@@ -11,7 +11,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { User, UserDto } from 'tweeter-shared';
 import { IAuthenticator } from '../../interfaces/IAuthenticator';
 import { DynamoDBAuthenticator } from './DynamoDBAuthenticator';
-#
 export class UserDaoDynamoDB implements IUserDao {
   private readonly dynamoClient;
   private readonly followTable: string;

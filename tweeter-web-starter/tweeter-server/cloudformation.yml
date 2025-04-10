@@ -34,8 +34,6 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: true
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
 
   FollowTable:
     Type: 'AWS::DynamoDB::Table'
@@ -67,8 +65,6 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: true
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
 
   UserTable:
     Type: 'AWS::DynamoDB::Table'

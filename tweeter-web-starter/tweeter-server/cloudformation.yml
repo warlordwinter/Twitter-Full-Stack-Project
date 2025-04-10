@@ -62,6 +62,9 @@ Resources:
               KeyType: 'RANGE'
           Projection:
             ProjectionType: 'ALL'
+            NonKeyAttributes:
+              - 'follower_count'
+              - 'followee_count'
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: true

@@ -157,10 +157,21 @@ jobs:
           fi
       - name: Deploy API Gateway stage
         run: |
-          REST_API_ID=111ommkrm1
-          STAGE_NAME=prod
-          DEPLOYMENT_ID=2ael6q
+          # Extract REST_API_ID dynamically
+          REST_API_ID=$(aws apigateway get-rest-apis --query "items[0].id" --output text)
 
+          # Extract STAGE_NAME dynamically (if you have multiple stages, adjust query accordingly)
+          STAGE_NAME=prod
+
+          # Extract DEPLOYMENT_ID dynamically (get the most recent deployment for the stage)
+          DEPLOYMENT_ID=$(aws apigateway get-deployments --rest-api-id $REST_API_ID --query "items[0].id" --output text)
+
+          # Debug output to verify variables
+          echo "REST_API_ID: $REST_API_ID"
+          echo "STAGE_NAME: $STAGE_NAME"
+          echo "DEPLOYMENT_ID: $DEPLOYMENT_ID"
+
+          # Update API Gateway stage with the extracted deployment ID
           echo "Updating stage '$STAGE_NAME' for API $REST_API_ID to deployment $DEPLOYMENT_ID..."
 
           if ! aws apigateway update-stage \

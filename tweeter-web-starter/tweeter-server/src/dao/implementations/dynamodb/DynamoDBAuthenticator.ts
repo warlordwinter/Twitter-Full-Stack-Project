@@ -11,16 +11,18 @@ export class DynamoDBAuthenticator implements IAuthenticator {
     this.dynamoClient = DynamoDBDocumentClient.from(
       new DynamoDBClient({ region: this.region })
     );
-    this.authTable = process.env.AUTH_TABLE || 'authtoken';
+    this.authTable = 'authtoken';
   }
 
   async authenticate(token: string): Promise<boolean> {
     try {
+      console.log('Authenticating token:', token);
       const params = {
         TableName: this.authTable,
         Key: { token },
       };
       const result = await this.dynamoClient.send(new GetCommand(params));
+      console.log('Authentication result:', result.Item !== undefined);
       return result.Item !== undefined;
     } catch (error) {
       console.error('Error during authentication:', error);

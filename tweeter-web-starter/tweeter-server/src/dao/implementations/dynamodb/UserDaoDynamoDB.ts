@@ -47,11 +47,7 @@ export class UserDaoDynamoDB implements IUserDao {
     return result.Item !== undefined;
   }
 
-  async getFolloweeCount(token: string, user: UserDto): Promise<number> {
-    if (!(await this.authenticator.authenticate(token))) {
-      throw new Error('Invalid token');
-    }
-
+  async getFolloweeCount(user: UserDto): Promise<number> {
     try {
       const result = await this.dynamoClient.send(
         new GetCommand({
@@ -71,11 +67,7 @@ export class UserDaoDynamoDB implements IUserDao {
     }
   }
 
-  async getFollowerCount(token: string, user: UserDto): Promise<number> {
-    if (!(await this.authenticator.authenticate(token))) {
-      throw new Error('Invalid token');
-    }
-
+  async getFollowerCount(user: UserDto): Promise<number> {
     try {
       const result = await this.dynamoClient.send(
         new GetCommand({
@@ -154,8 +146,8 @@ export class UserDaoDynamoDB implements IUserDao {
     );
 
     // Get the updated counts
-    const followerCount = await this.getFollowerCount(token, userToUnfollow);
-    const followeeCount = await this.getFolloweeCount(token, user);
+    const followerCount = await this.getFollowerCount(userToUnfollow);
+    const followeeCount = await this.getFolloweeCount(user);
 
     return [followerCount, followeeCount];
   }
@@ -248,8 +240,8 @@ export class UserDaoDynamoDB implements IUserDao {
     );
 
     // Get the updated counts
-    const followerCount = await this.getFollowerCount(token, userToFollow);
-    const followeeCount = await this.getFolloweeCount(token, user);
+    const followerCount = await this.getFollowerCount(userToFollow);
+    const followeeCount = await this.getFolloweeCount(user);
 
     return [followerCount, followeeCount];
   }

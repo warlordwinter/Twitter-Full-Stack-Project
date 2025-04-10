@@ -155,3 +155,18 @@ jobs:
             # Wait for stack creation to complete
             aws cloudformation wait stack-create-complete --stack-name tweeter-api
           fi
+      - name: Deploy API Gateway stage
+        run: |
+          REST_API_ID=111ommkrm1
+          STAGE_NAME=prod
+          DEPLOYMENT_ID=2ael6q
+
+          echo "Updating stage '$STAGE_NAME' for API $REST_API_ID to deployment $DEPLOYMENT_ID..."
+
+          if ! aws apigateway update-stage \
+            --rest-api-id $REST_API_ID \
+            --stage-name $STAGE_NAME \
+            --patch-operations op=replace,path=/deploymentId,value=$DEPLOYMENT_ID; then
+            echo "API Gateway stage update failed!" >&2
+            exit 1
+          fi

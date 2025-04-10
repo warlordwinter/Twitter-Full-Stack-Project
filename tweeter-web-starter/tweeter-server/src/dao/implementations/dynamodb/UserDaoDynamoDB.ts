@@ -8,7 +8,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { IUserDao } from '../../interfaces/IUserDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { User, UserDto } from 'tweeter-shared';
+import { Follow, User, UserDto } from 'tweeter-shared';
 import { IAuthenticator } from '../../interfaces/IAuthenticator';
 import { DynamoDBAuthenticator } from './DynamoDBAuthenticator';
 export class UserDaoDynamoDB implements IUserDao {
@@ -163,19 +163,31 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('Invalid token');
     }
 
-    const current_alias = await this.authenticator.lookup(token);
+    const current_user_string = await this.authenticator.lookup(token);
 
-    const user = await this.getUser(current_alias, userToFollow.alias);
-    if (!user) {
+    const current_user = await this.getUser(
+      current_user_string,
+      userToFollow.alias
+    );
+    if (!current_user) {
       throw new Error('User not found in follow action');
     }
+
+    const followThisPerson = new User(
+      current_user.firstName,
+      current_user.lastName,
+      current_user.alias,
+      current_user.imageUrl
+    );
+
+    const follow = new Follow(current_user, followThisPerson);
 
     // Initialize counts if they don't exist
     await this.dynamoClient.send(
       new UpdateCommand({
         TableName: this.followTable,
         Key: {
-          follower_handle: user.alias,
+          follower_handle: current_user.alias,
           followee_handle: userToFollow.alias,
         },
         UpdateExpression:
@@ -190,8 +202,8 @@ export class UserDaoDynamoDB implements IUserDao {
       new UpdateCommand({
         TableName: this.followTable,
         Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
+          follower_handle: current_user.alias,
+          followee_handle: current_user.alias,
         },
         UpdateExpression:
           'SET followee_count = if_not_exists(followee_count, :zero)',
@@ -206,9 +218,9 @@ export class UserDaoDynamoDB implements IUserDao {
       new PutCommand({
         TableName: this.followTable,
         Item: {
-          follower_handle: user.alias,
+          follower_handle: current_user.alias,
           followee_handle: userToFollow.alias,
-          follower_name: user.firstName + ' ' + user.lastName,
+          follower_name: current_user.firstName + ' ' + current_user.lastName,
           followee_name: userToFollow.firstName + ' ' + userToFollow.lastName,
         },
       })
@@ -234,8 +246,8 @@ export class UserDaoDynamoDB implements IUserDao {
       new UpdateCommand({
         TableName: this.followTable,
         Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
+          follower_handle: current_user.alias,
+          followee_handle: current_user.alias,
         },
         UpdateExpression: 'SET followee_count = followee_count + :inc',
         ExpressionAttributeValues: {
@@ -246,7 +258,7 @@ export class UserDaoDynamoDB implements IUserDao {
 
     // Get the updated counts
     const followerCount = await this.getFollowerCount(token, userToFollow);
-    const followeeCount = await this.getFolloweeCount(token, user);
+    const followeeCount = await this.getFolloweeCount(token, current_user);
 
     return [followerCount, followeeCount];
   }

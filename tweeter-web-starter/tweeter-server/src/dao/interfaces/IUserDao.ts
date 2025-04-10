@@ -7,9 +7,9 @@ export interface IUserDao {
     selectedUser: UserDto
   ): Promise<boolean>;
 
-  getFolloweeCount(user: UserDto): Promise<number>;
+  getFolloweeCount(token: string, user: UserDto): Promise<number>;
 
-  getFollowerCount(user: UserDto): Promise<number>;
+  getFollowerCount(token: string, user: UserDto): Promise<number>;
 
   unfollow(
     token: string,

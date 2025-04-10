@@ -47,7 +47,8 @@ export class UserDaoDynamoDB implements IUserDao {
     return result.Item !== undefined;
   }
 
-  async getFolloweeCount(user: UserDto): Promise<number> {
+  async getFolloweeCount(token: string, user: UserDto): Promise<number> {
+    console.log('token in getFolloweeCount', token);
     try {
       const result = await this.dynamoClient.send(
         new GetCommand({
@@ -67,7 +68,9 @@ export class UserDaoDynamoDB implements IUserDao {
     }
   }
 
-  async getFollowerCount(user: UserDto): Promise<number> {
+  async getFollowerCount(token: string, user: UserDto): Promise<number> {
+    console.log('token in getFollowerCount', token);
+
     try {
       const result = await this.dynamoClient.send(
         new GetCommand({
@@ -146,8 +149,8 @@ export class UserDaoDynamoDB implements IUserDao {
     );
 
     // Get the updated counts
-    const followerCount = await this.getFollowerCount(userToUnfollow);
-    const followeeCount = await this.getFolloweeCount(user);
+    const followerCount = await this.getFollowerCount(token, userToUnfollow);
+    const followeeCount = await this.getFolloweeCount(token, user);
 
     return [followerCount, followeeCount];
   }
@@ -240,8 +243,8 @@ export class UserDaoDynamoDB implements IUserDao {
     );
 
     // Get the updated counts
-    const followerCount = await this.getFollowerCount(userToFollow);
-    const followeeCount = await this.getFolloweeCount(user);
+    const followerCount = await this.getFollowerCount(token, userToFollow);
+    const followeeCount = await this.getFolloweeCount(token, user);
 
     return [followerCount, followeeCount];
   }

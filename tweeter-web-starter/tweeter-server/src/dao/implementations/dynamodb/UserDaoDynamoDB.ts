@@ -109,6 +109,7 @@ export class UserDaoDynamoDB implements IUserDao {
       throw new Error('User not found in unfollow action');
     }
 
+    // Delete the follow relationship
     await this.dynamoClient.send(
       new DeleteCommand({
         TableName: this.followTable,
@@ -119,6 +120,41 @@ export class UserDaoDynamoDB implements IUserDao {
       })
     );
 
+    // Decrement follower count for the followee
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: userToUnfollow.alias,
+          followee_handle: userToUnfollow.alias,
+        },
+        UpdateExpression:
+          'SET follower_count = if_not_exists(follower_count, :zero) - :dec',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+          ':dec': 1,
+        },
+      })
+    );
+
+    // Decrement followee count for the follower
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: user.alias,
+          followee_handle: user.alias,
+        },
+        UpdateExpression:
+          'SET followee_count = if_not_exists(followee_count, :zero) - :dec',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+          ':dec': 1,
+        },
+      })
+    );
+
+    // Get the updated counts
     const followerCount = await this.getFollowerCount(token, userToUnfollow);
     const followeeCount = await this.getFolloweeCount(token, user);
 
@@ -137,6 +173,37 @@ export class UserDaoDynamoDB implements IUserDao {
     if (!user) {
       throw new Error('User not found in follow action');
     }
+
+    // Initialize counts if they don't exist
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: userToFollow.alias,
+          followee_handle: userToFollow.alias,
+        },
+        UpdateExpression:
+          'SET follower_count = if_not_exists(follower_count, :zero)',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+        },
+      })
+    );
+
+    await this.dynamoClient.send(
+      new UpdateCommand({
+        TableName: this.followTable,
+        Key: {
+          follower_handle: user.alias,
+          followee_handle: user.alias,
+        },
+        UpdateExpression:
+          'SET followee_count = if_not_exists(followee_count, :zero)',
+        ExpressionAttributeValues: {
+          ':zero': 0,
+        },
+      })
+    );
 
     // Create the follow relationship
     await this.dynamoClient.send(
@@ -159,10 +226,8 @@ export class UserDaoDynamoDB implements IUserDao {
           follower_handle: userToFollow.alias,
           followee_handle: userToFollow.alias,
         },
-        UpdateExpression:
-          'SET follower_count = if_not_exists(follower_count, :zero) + :inc',
+        UpdateExpression: 'SET follower_count = follower_count + :inc',
         ExpressionAttributeValues: {
-          ':zero': 0,
           ':inc': 1,
         },
       })
@@ -176,10 +241,8 @@ export class UserDaoDynamoDB implements IUserDao {
           follower_handle: user.alias,
           followee_handle: user.alias,
         },
-        UpdateExpression:
-          'SET followee_count = if_not_exists(followee_count, :zero) + :inc',
+        UpdateExpression: 'SET followee_count = followee_count + :inc',
         ExpressionAttributeValues: {
-          ':zero': 0,
           ':inc': 1,
         },
       })

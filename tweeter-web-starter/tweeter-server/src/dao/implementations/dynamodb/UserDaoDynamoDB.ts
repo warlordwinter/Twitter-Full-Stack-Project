@@ -94,7 +94,7 @@ export class UserDaoDynamoDB implements IUserDao {
       return 0;
     }
   }
-
+  //
   async unfollow(
     token: string,
     userToUnfollow: UserDto

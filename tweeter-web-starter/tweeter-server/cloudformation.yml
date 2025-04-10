@@ -1310,14 +1310,14 @@ Resources:
         - arm64
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref FollowTable
+            TableName: !Ref FollowsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref UserTable
         - DynamoDBCrudPolicy:
             TableName: !Ref AuthTable
       Environment:
         Variables:
-          FOLLOW_TABLE: !Ref FollowTable
+          FOLLOW_TABLE: !Ref FollowsTable
           USER_TABLE: !Ref UserTable
           AUTH_TABLE: !Ref AuthTable
       Events:

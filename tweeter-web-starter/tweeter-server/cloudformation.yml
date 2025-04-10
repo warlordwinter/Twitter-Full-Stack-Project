@@ -108,36 +108,6 @@ Resources:
       SSESpecification:
         SSEEnabled: true # Automatically encrypts data at rest using AWS KMS
 
-FollowsTable:
-  Type: AWS::DynamoDB::Table
-  Properties:
-    TableName: follows
-    ProvisionedThroughput:
-      ReadCapacityUnits: 5
-      WriteCapacityUnits: 5
-    AttributeDefinitions:
-      - AttributeName: follower_handle
-        AttributeType: S
-      - AttributeName: followee_handle
-        AttributeType: S
-    KeySchema:
-      - AttributeName: follower_handle
-        KeyType: HASH
-      - AttributeName: followee_handle
-        KeyType: RANGE
-    GlobalSecondaryIndexes:
-      - IndexName: follows_index
-        KeySchema:
-          - AttributeName: follower_handle
-            KeyType: HASH
-          - AttributeName: followee_handle
-            KeyType: RANGE
-        Projection:
-          ProjectionType: ALL
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-
   # Lambda Layer for shared code
   TweeterSharedLayer:
     Type: AWS::Lambda::LayerVersion

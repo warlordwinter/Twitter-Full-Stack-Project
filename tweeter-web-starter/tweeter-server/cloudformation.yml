@@ -44,10 +44,6 @@ Resources:
           AttributeType: 'S'
         - AttributeName: 'followee_alias'
           AttributeType: 'S'
-        - AttributeName: 'follower_count'
-          AttributeType: 'N'
-        - AttributeName: 'followee_count'
-          AttributeType: 'N'
       KeySchema:
         - AttributeName: 'follower_alias'
           KeyType: 'HASH'
@@ -62,9 +58,6 @@ Resources:
               KeyType: 'RANGE'
           Projection:
             ProjectionType: 'ALL'
-            NonKeyAttributes:
-              - 'follower_count'
-              - 'followee_count'
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: true

@@ -108,11 +108,11 @@ export class StatusDaoDynamoDB implements IStatusDao {
     }
   }
 
-  async postFeed(token: string, newStatus: StatusDto): Promise<void> {
+  async postFeed(receiver_alias: string, newStatus: StatusDto): Promise<void> {
     const params = {
       TableName: this.feedTable,
       Item: {
-        receiver_alias: newStatus.user.alias,
+        receiver_alias: receiver_alias,
         'isodate+sender_alias':
           newStatus.timestamp.toString() + '+' + newStatus.user.alias,
         post: newStatus.post,

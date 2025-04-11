@@ -84,6 +84,13 @@ export class StatusService {
       throw new Error('Invalid token');
     }
     await this.statusDao.postStory(token, newStatus);
-    await this.statusDao.postFeed(token, newStatus);
+    const [followers] = await this.followDao.getFollowers(
+      newStatus.user.alias,
+      1000,
+      null
+    );
+    for (const follower of followers) {
+      await this.statusDao.postFeed(follower.alias, newStatus);
+    }
   }
 }

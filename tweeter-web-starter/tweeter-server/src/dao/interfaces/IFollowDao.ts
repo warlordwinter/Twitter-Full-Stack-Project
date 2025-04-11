@@ -12,5 +12,5 @@ export interface IFollowDao {
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]>;
-  getAllUsers(): Promise<[UserDto[]]>;
+  getAllUsers(alias: string): Promise<[UserDto[]]>;
 }

@@ -108,9 +108,13 @@ export class FollowDaoDynamoDB implements IFollowDao {
     return [followees, hasMore];
   }
 
-  async getAllUsers(): Promise<[UserDto[]]> {
+  async getAllUsers(alias: string): Promise<[UserDto[]]> {
     const params: ScanCommandInput = {
       TableName: this.userTableName,
+      FilterExpression: 'alias <> :alias',
+      ExpressionAttributeValues: {
+        ':alias': alias,
+      },
     };
 
     const result = await this.dynamoClient.send(new ScanCommand(params));

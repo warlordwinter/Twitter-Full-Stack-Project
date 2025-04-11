@@ -48,7 +48,7 @@ export class StatusService {
       if (followee.alias === userAlias) continue;
 
       try {
-        const [posts] = await this.statusDao.getPageOfStory(
+        const [posts] = await this.statusDao.getPageOfFeed(
           followee.alias,
           pageSize,
           lastItem

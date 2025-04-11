@@ -1,4 +1,8 @@
-import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  QueryCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { IStatusDao } from '../../interfaces/IStatusDao';
 import { StatusDto } from 'tweeter-shared';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -47,5 +51,37 @@ export class StatusDaoDynamoDB implements IStatusDao {
       ) || [];
 
     return [items, !!result.LastEvaluatedKey];
+  }
+
+  async postStory(token: string, newStatus: StatusDto): Promise<void> {
+    const params = {
+      TableName: this.storyTable,
+      Item: {
+        sender_alias: newStatus.user.alias,
+        post: newStatus.post,
+      },
+    };
+    try {
+      await this.dynamoClient.send(new PutCommand(params));
+    } catch (error) {
+      console.error('Error posting story:', error);
+      throw error;
+    }
+  }
+
+  async postFeed(token: string, newStatus: StatusDto): Promise<void> {
+    const params = {
+      TableName: this.storyTable,
+      Item: {
+        sender_alias: newStatus.user.alias,
+        post: newStatus.post,
+      },
+    };
+    try {
+      await this.dynamoClient.send(new PutCommand(params));
+    } catch (error) {
+      console.error('Error posting feed:', error);
+      throw error;
+    }
   }
 }

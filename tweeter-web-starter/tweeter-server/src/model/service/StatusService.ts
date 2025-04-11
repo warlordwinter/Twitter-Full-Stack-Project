@@ -39,12 +39,10 @@ export class StatusService {
   }
 
   public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
-    // Pause so we can see the logging out message. Remove when connected to the server
-    try {
-      await new Promise(f => setTimeout(f, 2000));
-    } catch (error) {
-      console.log('error in service');
+    if (!(await this.authenticator.authenticate(token))) {
+      throw new Error('Invalid token');
     }
-    // TODO: Call the server to post the status
+    await this.statusDao.postStory(token, newStatus);
+    await this.statusDao.postFeed(token, newStatus);
   }
 }

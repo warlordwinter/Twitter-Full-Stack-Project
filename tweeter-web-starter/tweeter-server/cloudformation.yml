@@ -224,21 +224,6 @@ Resources:
       BinaryMediaTypes:
         - image/jpeg
         - image/png
-      Cors:
-        AllowOrigins:
-          - http://localhost:5173
-          - https://3gp9vu1txe.execute-api.us-west-2.amazonaws.com
-        AllowMethods:
-          - GET
-          - POST
-          - OPTIONS
-        AllowHeaders:
-          - Content-Type
-          - X-Amz-Date
-          - Authorization
-          - X-Api-Key
-          - X-Amz-Security-Token
-        MaxAge: 600
 
   # Gateway Responses for CORS
   GatewayResponse4XX:

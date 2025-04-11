@@ -31,7 +31,8 @@ export class FollowService {
     }
 
     if ((await this.userDao.getFollowerCount(user)) === 0) {
-      return this.followDao.getAllUsers(userAlias, pageSize, lastItem);
+      const [users] = await this.followDao.getAllUsers();
+      return [users, false];
     } else {
       return this.followDao.getFollowers(userAlias, pageSize, lastItem);
     }
@@ -51,7 +52,8 @@ export class FollowService {
       throw new Error('User not found');
     }
     if ((await this.userDao.getFolloweeCount(user)) === 0) {
-      return this.followDao.getAllUsers(userAlias, pageSize, lastItem);
+      const [users] = await this.followDao.getAllUsers();
+      return [users, false];
     } else {
       return this.followDao.getFollowees(userAlias, pageSize, lastItem);
     }

@@ -2,6 +2,8 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   QueryCommandInput,
+  ScanCommand,
+  ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { IFollowDao } from '../../interfaces/IFollowDao';
 import { UserDto } from 'tweeter-shared';
@@ -106,28 +108,12 @@ export class FollowDaoDynamoDB implements IFollowDao {
     return [followees, hasMore];
   }
 
-  async getAllUsers(
-    userAlias: string,
-    pageSize: number,
-    lastItem: UserDto | null
-  ): Promise<[UserDto[], boolean]> {
-    const params: QueryCommandInput = {
+  async getAllUsers(): Promise<[UserDto[]]> {
+    const params: ScanCommandInput = {
       TableName: this.userTableName,
-      KeyConditionExpression: 'alias = :alias',
-      ExpressionAttributeValues: {
-        ':alias': userAlias,
-      },
-      Limit: pageSize,
-      ScanIndexForward: true,
     };
 
-    if (lastItem) {
-      params.ExclusiveStartKey = {
-        alias: lastItem.alias,
-      };
-    }
-
-    const result = await this.dynamoClient.send(new QueryCommand(params));
+    const result = await this.dynamoClient.send(new ScanCommand(params));
 
     const users =
       result.Items?.map(
@@ -140,7 +126,6 @@ export class FollowDaoDynamoDB implements IFollowDao {
           } as UserDto)
       ) || [];
 
-    const hasMore = !!result.LastEvaluatedKey;
-    return [users, hasMore];
+    return [users];
   }
 }

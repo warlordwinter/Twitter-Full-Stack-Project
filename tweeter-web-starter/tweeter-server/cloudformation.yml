@@ -99,6 +99,24 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  FeedTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'feed'
+      AttributeDefinitions:
+        - AttributeName: 'receiver_alias'
+          AttributeType: 'S'
+        - AttributeName: 'isodate+sender_alias'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'receiver_alias'
+          KeyType: 'HASH'
+        - AttributeName: 'isodate+sender_alias'
+          KeyType: 'RANGE'
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+
   # Lambda Layer for shared code
   TweeterSharedLayer:
     Type: AWS::Lambda::LayerVersion

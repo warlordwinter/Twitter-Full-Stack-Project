@@ -4,6 +4,7 @@ import {
   GetCommand,
   PutCommand,
   UpdateCommand,
+  QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { IUserDao } from '../../interfaces/IUserDao';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -105,30 +106,31 @@ export class UserDaoDynamoDB implements IUserDao {
 
   async getFollowerCount(user: UserDto): Promise<number> {
     const result = await this.dynamoClient.send(
-      new GetCommand({
+      new QueryCommand({
         TableName: this.followTable,
-        Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
+        IndexName: 'follows_index',
+        KeyConditionExpression: 'followee_handle = :followee',
+        ExpressionAttributeValues: {
+          ':followee': user.alias,
         },
-        ProjectionExpression: 'follower_count',
+        Select: 'COUNT',
       })
     );
-    return result.Item?.follower_count || 0;
+    return result.Count || 0;
   }
 
   async getFolloweeCount(user: UserDto): Promise<number> {
     const result = await this.dynamoClient.send(
-      new GetCommand({
+      new QueryCommand({
         TableName: this.followTable,
-        Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
+        KeyConditionExpression: 'follower_handle = :follower',
+        ExpressionAttributeValues: {
+          ':follower': user.alias,
         },
-        ProjectionExpression: 'followee_count',
+        Select: 'COUNT',
       })
     );
-    return result.Item?.followee_count || 0;
+    return result.Count || 0;
   }
 
   async getUser(alias: string): Promise<User | null> {

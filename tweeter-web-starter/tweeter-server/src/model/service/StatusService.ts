@@ -1,4 +1,3 @@
-import { FakeData, Status } from 'tweeter-shared';
 import { StatusDto } from 'tweeter-shared/src/model/dto/StatusDto';
 import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
 import { IStatusDao } from '../../dao/interfaces/IStatusDao';
@@ -23,7 +22,7 @@ export class StatusService {
     if (!(await this.authenticator.authenticate(token))) {
       throw new Error('Invalid token');
     }
-    throw new Error('Not implemented');
+    return this.statusDao.getPageOfFeed(userAlias, pageSize, lastItem);
   }
 
   public async loadMoreStory(

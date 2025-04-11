@@ -9,4 +9,9 @@ export interface IStatusDao {
 
   postFeed(token: string, newStatus: StatusDto): Promise<void>;
   postStory(token: string, newStatus: StatusDto): Promise<void>;
+  getPageOfFeed(
+    userAlias: string,
+    pageSize: number,
+    lastItem: StatusDto | null
+  ): Promise<[StatusDto[], boolean]>;
 }

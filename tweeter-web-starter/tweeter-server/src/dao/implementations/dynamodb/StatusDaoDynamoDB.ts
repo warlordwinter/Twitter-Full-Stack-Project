@@ -11,6 +11,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
   private readonly dynamoClient;
   private readonly region: string = 'us-west-2';
   private readonly storyTable: string = 'story';
+  private readonly feedTable: string = 'feed';
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(
@@ -53,12 +54,50 @@ export class StatusDaoDynamoDB implements IStatusDao {
     return [items, !!result.LastEvaluatedKey];
   }
 
+  async getPageOfFeed(
+    userAlias: string,
+    pageSize: number,
+    lastItem: StatusDto | null
+  ): Promise<[StatusDto[], boolean]> {
+    const params = {
+      TableName: this.feedTable,
+      KeyConditionExpression: 'receiver_alias = :receiver_alias',
+      ExpressionAttributeValues: {
+        ':receiver_alias': userAlias,
+      },
+      Limit: pageSize,
+      ExclusiveStartKey: lastItem
+        ? {
+            receiver_alias: userAlias,
+            'isodate+sender_alias':
+              lastItem.timestamp.toString() + '+' + lastItem.user.alias,
+          }
+        : undefined,
+      ScanIndexForward: false, // if you want latest posts first
+    };
+
+    const result = await this.dynamoClient.send(new QueryCommand(params));
+
+    const items =
+      result.Items?.map(
+        (item): StatusDto => ({
+          post: item.post,
+          user: item.user,
+          timestamp: parseInt(item.timestamp),
+        })
+      ) || [];
+
+    return [items, !!result.LastEvaluatedKey];
+  }
+
   async postStory(token: string, newStatus: StatusDto): Promise<void> {
     const params = {
       TableName: this.storyTable,
       Item: {
         sender_alias: newStatus.user.alias,
+        timestamp: newStatus.timestamp.toString(),
         post: newStatus.post,
+        user: newStatus.user,
       },
     };
     try {
@@ -71,10 +110,14 @@ export class StatusDaoDynamoDB implements IStatusDao {
 
   async postFeed(token: string, newStatus: StatusDto): Promise<void> {
     const params = {
-      TableName: this.storyTable,
+      TableName: this.feedTable,
       Item: {
-        sender_alias: newStatus.user.alias,
+        receiver_alias: newStatus.user.alias,
+        'isodate+sender_alias':
+          newStatus.timestamp.toString() + '+' + newStatus.user.alias,
         post: newStatus.post,
+        user: newStatus.user,
+        timestamp: newStatus.timestamp.toString(),
       },
     };
     try {

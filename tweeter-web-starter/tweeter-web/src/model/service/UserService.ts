@@ -19,12 +19,26 @@ export class UserService {
     user: User,
     selectedUser: User
   ): Promise<boolean> {
-    const request: GetIsRequest = {
-      token: token,
-      user: user.dto,
-      selectedUser: selectedUser.dto,
-    };
-    return this.serverFacade.getIsFollowerStatus(request);
+    try {
+      console.log('Constructing request with:', {
+        token,
+        user: user.dto,
+        selectedUser: selectedUser.dto,
+      });
+
+      const request: GetIsRequest = {
+        token: token,
+        user: user.dto,
+        selectedUser: selectedUser.dto,
+      };
+
+      const response = await this.serverFacade.getIsFollowerStatus(request);
+      console.log('Received response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error in getIsFollowerStatus:', error);
+      throw error;
+    }
   }
 
   public async getFolloweeCount(token: string, user: User): Promise<number> {

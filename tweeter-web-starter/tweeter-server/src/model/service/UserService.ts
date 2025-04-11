@@ -47,8 +47,8 @@ export class UserService {
     }
 
     await this.userDao.deleteFollow(follower, userToUnfollow);
-    await this.userDao.updateFollowerCount(userToUnfollow, -1);
-    await this.userDao.updateFolloweeCount(follower, -1);
+    await this.userDao.updateFollowerCount(follower, -1);
+    await this.userDao.updateFolloweeCount(userToUnfollow, -1);
 
     const followerCount = await this.userDao.getFollowerCount(userToUnfollow);
     const followeeCount = await this.userDao.getFolloweeCount(follower);
@@ -66,8 +66,8 @@ export class UserService {
     }
 
     await this.userDao.createFollow(follower, userToFollow);
-    await this.userDao.updateFollowerCount(userToFollow, 1);
-    await this.userDao.updateFolloweeCount(follower, 1);
+    await this.userDao.updateFollowerCount(follower, 1);
+    await this.userDao.updateFolloweeCount(userToFollow, 1);
 
     const followerCount = await this.userDao.getFollowerCount(userToFollow);
     const followeeCount = await this.userDao.getFolloweeCount(follower);

@@ -211,10 +211,6 @@ Resources:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2/index/follows_index
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story
-              - Effect: Allow
-                Action:
-                  - dynamodb:BatchWriteItem
-                Resource:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/feed
 
   # API Gateway
@@ -951,8 +947,8 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "statuses": $inputRoot.statuses,
-                  "hasMore": $inputRoot.hasMore
+                  "statuses": $inputRoot.statuses || [],
+                  "hasMore": $inputRoot.hasMore || false
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"
@@ -1084,8 +1080,8 @@ Resources:
                 {
                   "success": true,
                   "message": null,
-                  "statuses": $inputRoot.statuses,
-                  "hasMore": $inputRoot.hasMore
+                  "statuses": $inputRoot.statuses || [],
+                  "hasMore": $inputRoot.hasMore || false
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

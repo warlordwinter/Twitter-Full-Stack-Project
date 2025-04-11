@@ -211,6 +211,10 @@ Resources:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2/index/follows_index
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchWriteItem
+                Resource:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/feed
 
   # API Gateway

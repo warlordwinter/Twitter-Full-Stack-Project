@@ -944,12 +944,6 @@ Resources:
             ResponseTemplates:
               application/json: |
                 #set($inputRoot = $input.path('$'))
-                #if(!$inputRoot.statuses)
-                  #set($inputRoot.statuses = [])
-                #end
-                #if(!$inputRoot.hasMore)
-                  #set($inputRoot.hasMore = false)
-                #end
                 {
                   "success": true,
                   "message": null,
@@ -1083,12 +1077,6 @@ Resources:
             ResponseTemplates:
               application/json: |
                 #set($inputRoot = $input.path('$'))
-                #if(!$inputRoot.statuses)
-                  #set($inputRoot.statuses = [])
-                #end
-                #if(!$inputRoot.hasMore)
-                  #set($inputRoot.hasMore = false)
-                #end
                 {
                   "success": true,
                   "message": null,

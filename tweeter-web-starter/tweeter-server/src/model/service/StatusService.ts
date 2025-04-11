@@ -82,23 +82,14 @@ export class StatusService {
   public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
     try {
       await this.statusDao.postStory(token, newStatus);
-
-      // Get the people who are following the user who posted
       const [followers] = await this.followDao.getFollowers(
-        newStatus.user.alias, // This is correct - we want people following "b"
+        newStatus.user.alias,
         1000,
         null
       );
-      console.log('Followers:', followers);
-
-      if (followers.length === 0) {
-        console.log('No followers found for user:', newStatus.user.alias);
-        return;
-      }
+      console.log(followers);
 
       const followerAliases = followers.map(follower => follower.alias);
-      console.log('Follower aliases:', followerAliases);
-
       await this.statusDao.batchPostFeed(followerAliases, newStatus);
     } catch (error) {
       console.error('Error in postStatus:', error);

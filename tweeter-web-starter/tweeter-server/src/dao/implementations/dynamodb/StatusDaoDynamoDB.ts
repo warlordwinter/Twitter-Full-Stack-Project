@@ -2,6 +2,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
   QueryCommand,
+  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { IStatusDao } from '../../interfaces/IStatusDao';
 import { StatusDto } from 'tweeter-shared';
@@ -125,6 +126,43 @@ export class StatusDaoDynamoDB implements IStatusDao {
     } catch (error) {
       console.error('Error posting feed:', error);
       throw error;
+    }
+  }
+
+  async batchPostFeed(
+    receiver_aliases: string[],
+    newStatus: StatusDto
+  ): Promise<void> {
+    // DynamoDB batch write has a limit of 25 items per batch
+    const BATCH_SIZE = 25;
+
+    for (let i = 0; i < receiver_aliases.length; i += BATCH_SIZE) {
+      const batch = receiver_aliases.slice(i, i + BATCH_SIZE);
+      const requestItems = {
+        [this.feedTable]: batch.map(receiver_alias => ({
+          PutRequest: {
+            Item: {
+              receiver_alias: receiver_alias,
+              'isodate+sender_alias':
+                newStatus.timestamp.toString() + '+' + newStatus.user.alias,
+              post: newStatus.post,
+              user: newStatus.user,
+              timestamp: newStatus.timestamp.toString(),
+            },
+          },
+        })),
+      };
+
+      try {
+        await this.dynamoClient.send(
+          new BatchWriteCommand({
+            RequestItems: requestItems,
+          })
+        );
+      } catch (error) {
+        console.error('Error in batch posting feed:', error);
+        throw error;
+      }
     }
   }
 }

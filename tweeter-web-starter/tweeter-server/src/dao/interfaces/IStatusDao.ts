@@ -14,4 +14,9 @@ export interface IStatusDao {
     pageSize: number,
     lastItem: StatusDto | null
   ): Promise<[StatusDto[], boolean]>;
+  postFeed(receiver_alias: string, newStatus: StatusDto): Promise<void>;
+  batchPostFeed(
+    receiver_aliases: string[],
+    newStatus: StatusDto
+  ): Promise<void>;
 }

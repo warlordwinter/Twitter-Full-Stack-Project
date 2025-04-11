@@ -89,8 +89,9 @@ export class StatusService {
       1000,
       null
     );
-    for (const follower of followers) {
-      await this.statusDao.postFeed(follower.alias, newStatus);
-    }
+
+    // Extract just the aliases for batch processing
+    const followerAliases = followers.map(follower => follower.alias);
+    await this.statusDao.batchPostFeed(followerAliases, newStatus);
   }
 }

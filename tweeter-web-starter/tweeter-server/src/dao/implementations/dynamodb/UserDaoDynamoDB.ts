@@ -71,11 +71,8 @@ export class UserDaoDynamoDB implements IUserDao {
   async updateFollowerCount(user: UserDto, increment: number): Promise<void> {
     await this.dynamoClient.send(
       new UpdateCommand({
-        TableName: this.followTable,
-        Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
-        },
+        TableName: this.userTable,
+        Key: { alias: user.alias },
         UpdateExpression:
           'SET follower_count = if_not_exists(follower_count, :zero) + :inc',
         ExpressionAttributeValues: {
@@ -89,11 +86,8 @@ export class UserDaoDynamoDB implements IUserDao {
   async updateFolloweeCount(user: UserDto, increment: number): Promise<void> {
     await this.dynamoClient.send(
       new UpdateCommand({
-        TableName: this.followTable,
-        Key: {
-          follower_handle: user.alias,
-          followee_handle: user.alias,
-        },
+        TableName: this.userTable,
+        Key: { alias: user.alias },
         UpdateExpression:
           'SET followee_count = if_not_exists(followee_count, :zero) + :inc',
         ExpressionAttributeValues: {
@@ -106,31 +100,24 @@ export class UserDaoDynamoDB implements IUserDao {
 
   async getFollowerCount(user: UserDto): Promise<number> {
     const result = await this.dynamoClient.send(
-      new QueryCommand({
-        TableName: this.followTable,
-        IndexName: 'follows_index',
-        KeyConditionExpression: 'followee_handle = :followee',
-        ExpressionAttributeValues: {
-          ':followee': user.alias,
-        },
-        Select: 'COUNT',
+      new GetCommand({
+        TableName: this.userTable,
+        Key: { alias: user.alias },
+        ProjectionExpression: 'follower_count',
       })
     );
-    return result.Count || 0;
+    return result.Item?.follower_count || 0;
   }
 
   async getFolloweeCount(user: UserDto): Promise<number> {
     const result = await this.dynamoClient.send(
-      new QueryCommand({
-        TableName: this.followTable,
-        KeyConditionExpression: 'follower_handle = :follower',
-        ExpressionAttributeValues: {
-          ':follower': user.alias,
-        },
-        Select: 'COUNT',
+      new GetCommand({
+        TableName: this.userTable,
+        Key: { alias: user.alias },
+        ProjectionExpression: 'followee_count',
       })
     );
-    return result.Count || 0;
+    return result.Item?.followee_count || 0;
   }
 
   async getUser(alias: string): Promise<User | null> {

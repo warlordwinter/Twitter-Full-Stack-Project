@@ -18,7 +18,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
       new DynamoDBClient({ region: this.region })
     );
   }
-
+  // make sure to figure out how to display the feed and story of those you follow or unfollow.
   async getPageOfStory(
     userAlias: string,
     pageSize: number,

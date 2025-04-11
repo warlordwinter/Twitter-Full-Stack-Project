@@ -191,6 +191,7 @@ Resources:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2/index/follows_index
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story
 
   # API Gateway

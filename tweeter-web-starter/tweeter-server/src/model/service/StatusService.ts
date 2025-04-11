@@ -80,18 +80,29 @@ export class StatusService {
   }
 
   public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
-    if (!(await this.authenticator.authenticate(token))) {
-      throw new Error('Invalid token');
-    }
-    await this.statusDao.postStory(token, newStatus);
-    const [followers] = await this.followDao.getFollowers(
-      newStatus.user.alias,
-      1000,
-      null
-    );
+    try {
+      await this.statusDao.postStory(token, newStatus);
 
-    // Extract just the aliases for batch processing
-    const followerAliases = followers.map(follower => follower.alias);
-    await this.statusDao.batchPostFeed(followerAliases, newStatus);
+      // Get the people who are following the user who posted
+      const [followers] = await this.followDao.getFollowers(
+        newStatus.user.alias, // This is correct - we want people following "b"
+        1000,
+        null
+      );
+      console.log('Followers:', followers);
+
+      if (followers.length === 0) {
+        console.log('No followers found for user:', newStatus.user.alias);
+        return;
+      }
+
+      const followerAliases = followers.map(follower => follower.alias);
+      console.log('Follower aliases:', followerAliases);
+
+      await this.statusDao.batchPostFeed(followerAliases, newStatus);
+    } catch (error) {
+      console.error('Error in postStatus:', error);
+      throw error;
+    }
   }
 }

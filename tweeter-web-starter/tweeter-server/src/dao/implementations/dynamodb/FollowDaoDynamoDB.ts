@@ -6,37 +6,33 @@ import {
 import { IFollowDao } from '../../interfaces/IFollowDao';
 import { UserDto } from 'tweeter-shared';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { IAuthenticator } from '../../interfaces/IAuthenticator';
-import { DynamoDBAuthenticator } from './DynamoDBAuthenticator';
+import { IUserDao } from '../../interfaces/IUserDao';
+import { UserDaoDynamoDB } from './UserDaoDynamoDB';
 
 export class FollowDaoDynamoDB implements IFollowDao {
   private readonly dynamoClient;
   private readonly region: string = 'us-west-2';
-  readonly tableName = 'follow';
-  readonly followerAliasAttr = 'follower_alias';
-  readonly followeeAliasAttr = 'followee_alias';
-  private readonly authenticator: IAuthenticator;
+  readonly tableName = 'follows-us-west-2';
+  readonly userTableName = 'user';
+  readonly followerAliasAttr = 'follower_handle';
+  readonly followeeAliasAttr = 'followee_handle';
+  private readonly userDao: IUserDao;
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(
       new DynamoDBClient({ region: this.region })
     );
-    this.authenticator = new DynamoDBAuthenticator();
+    this.userDao = new UserDaoDynamoDB();
   }
 
   async getFollowers(
-    token: string,
     userAlias: string,
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]> {
-    if (!(await this.authenticator.authenticate(token))) {
-      throw new Error('Invalid token');
-    }
-
     const params: QueryCommandInput = {
       TableName: this.tableName,
-      IndexName: 'followee_alias-index',
+      IndexName: 'follows_index',
       KeyConditionExpression: `${this.followeeAliasAttr} = :followee`,
       ExpressionAttributeValues: {
         ':followee': userAlias,
@@ -54,29 +50,97 @@ export class FollowDaoDynamoDB implements IFollowDao {
 
     const result = await this.dynamoClient.send(new QueryCommand(params));
 
-    const followers =
-      result.Items?.map(item => {
+    // Get complete user information for each follower
+    const followers = await Promise.all(
+      result.Items?.map(async item => {
         const followerAlias = item[this.followerAliasAttr];
-        // For now, we'll create a basic UserDto with just the alias
-        // You might want to join with the users table to get full user details
-        return {
-          firstName: '',
-          lastName: '',
-          alias: followerAlias,
-          imageUrl: '',
-        } as UserDto;
-      }) || [];
+        const user = await this.userDao.getUser(followerAlias);
+        if (!user) {
+          throw new Error(`User not found: ${followerAlias}`);
+        }
+        return user;
+      }) || []
+    );
 
     const hasMore = !!result.LastEvaluatedKey;
     return [followers, hasMore];
   }
 
-  getFollowees(
-    token: string,
+  async getFollowees(
     userAlias: string,
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]> {
-    throw new Error('Method not implemented.');
+    const params: QueryCommandInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: `${this.followerAliasAttr} = :follower`,
+      ExpressionAttributeValues: {
+        ':follower': userAlias,
+      },
+      Limit: pageSize,
+      ScanIndexForward: true,
+    };
+
+    if (lastItem) {
+      params.ExclusiveStartKey = {
+        [this.followerAliasAttr]: userAlias,
+        [this.followeeAliasAttr]: lastItem.alias,
+      };
+    }
+
+    const result = await this.dynamoClient.send(new QueryCommand(params));
+
+    // Get complete user information for each followee
+    const followees = await Promise.all(
+      result.Items?.map(async item => {
+        const followeeAlias = item[this.followeeAliasAttr];
+        const user = await this.userDao.getUser(followeeAlias);
+        if (!user) {
+          throw new Error(`User not found: ${followeeAlias}`);
+        }
+        return user;
+      }) || []
+    );
+
+    const hasMore = !!result.LastEvaluatedKey;
+    return [followees, hasMore];
+  }
+
+  async getAllUsers(
+    userAlias: string,
+    pageSize: number,
+    lastItem: UserDto | null
+  ): Promise<[UserDto[], boolean]> {
+    const params: QueryCommandInput = {
+      TableName: this.userTableName,
+      KeyConditionExpression: 'alias = :alias',
+      ExpressionAttributeValues: {
+        ':alias': userAlias,
+      },
+      Limit: pageSize,
+      ScanIndexForward: true,
+    };
+
+    if (lastItem) {
+      params.ExclusiveStartKey = {
+        alias: lastItem.alias,
+      };
+    }
+
+    const result = await this.dynamoClient.send(new QueryCommand(params));
+
+    const users =
+      result.Items?.map(
+        item =>
+          ({
+            firstName: item.firstName,
+            lastName: item.lastName,
+            alias: item.alias,
+            imageUrl: item.imageUrl,
+          } as UserDto)
+      ) || [];
+
+    const hasMore = !!result.LastEvaluatedKey;
+    return [users, hasMore];
   }
 }

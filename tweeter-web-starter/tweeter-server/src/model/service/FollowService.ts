@@ -1,13 +1,18 @@
-import { FakeData, User } from 'tweeter-shared';
-import { UserDto } from 'tweeter-shared/src/model/dto/UserDto';
+import { UserDto } from 'tweeter-shared';
 import { IDaoFactory } from '../../dao/interfaces/IDaoFactory';
 import { IFollowDao } from '../../dao/interfaces/IFollowDao';
-
+import { IAuthenticator } from '../../dao/interfaces/IAuthenticator';
+import { DynamoDBAuthenticator } from '../../dao/implementations/dynamodb/DynamoDBAuthenticator';
+import { IUserDao } from '../../dao/interfaces/IUserDao';
 export class FollowService {
   private followDao: IFollowDao;
+  private userDao: IUserDao;
+  private authenticator: IAuthenticator;
 
   public constructor(daoFactory: IDaoFactory) {
     this.followDao = daoFactory.createFollowDao();
+    this.userDao = daoFactory.createUserDao();
+    this.authenticator = new DynamoDBAuthenticator();
   }
 
   public async loadMoreFollowers(
@@ -16,8 +21,20 @@ export class FollowService {
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]> {
-    // TODO: Replace with the result of calling server
-    return this.followDao.getFollowers(token, userAlias, pageSize, lastItem);
+    if (!(await this.authenticator.authenticate(token))) {
+      throw new Error('Invalid token');
+    }
+
+    const user = await this.userDao.getUser(userAlias);
+    if (user === null) {
+      throw new Error('User not found');
+    }
+
+    if ((await this.userDao.getFollowerCount(user)) === 0) {
+      return this.followDao.getAllUsers(userAlias, pageSize, lastItem);
+    } else {
+      return this.followDao.getFollowers(userAlias, pageSize, lastItem);
+    }
   }
 
   public async loadMoreFollowees(
@@ -26,7 +43,17 @@ export class FollowService {
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]> {
-    // TODO: Replace with the result of calling server
-    return this.followDao.getFollowees(token, userAlias, pageSize, lastItem);
+    if (!(await this.authenticator.authenticate(token))) {
+      throw new Error('Invalid token');
+    }
+    const user = await this.userDao.getUser(userAlias);
+    if (user === null) {
+      throw new Error('User not found');
+    }
+    if ((await this.userDao.getFolloweeCount(user)) === 0) {
+      return this.followDao.getAllUsers(userAlias, pageSize, lastItem);
+    } else {
+      return this.followDao.getFollowees(userAlias, pageSize, lastItem);
+    }
   }
 }

@@ -20,7 +20,8 @@ export class UserService {
   ): Promise<boolean> {
     // await this.authenticator.authenticate(token);
     console.log('token in getIsFollowerStatus', token);
-    return this.userDao.getFollow(user, selectedUser);
+    const isFollower = await this.userDao.getFollow(user, selectedUser);
+    return isFollower ?? false;
   }
 
   public async getFolloweeCount(token: string, user: UserDto): Promise<number> {

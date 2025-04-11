@@ -1,7 +1,7 @@
-import { User } from "tweeter-shared";
-import { Link } from "react-router-dom";
+import { User } from 'tweeter-shared';
+import { Link } from 'react-router-dom';
 // import useToastListener from "../toaster/ToastListenerHook";
-import useNavigationListener from "../navigationHook/NavigationListenerHook";
+import useNavigationListener from '../navigationHook/NavigationListenerHook';
 // import useUserInfo from "../userInfo/UseUserInfo";
 
 interface Props {
@@ -31,11 +31,11 @@ const UserItem = (props: Props) => {
             <h2>
               <b>
                 {props.value.firstName} {props.value.lastName}
-              </b>{" "}
-              -{" "}
+              </b>{' '}
+              -{' '}
               <Link
                 to={props.value.alias}
-                onClick={(event) => navigateToUser(event)}
+                onClick={event => navigateToUser(event)}
               >
                 {props.value.alias}
               </Link>

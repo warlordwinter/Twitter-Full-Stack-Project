@@ -796,34 +796,18 @@ Resources:
           application/json: |
             {
               "token": $input.json('$.token'),
-              "user": $input.json('$.user')
+              "user": $input.json('$.user'),
+              "selectedUser": $input.json('$.selectedUser')
             }
         IntegrationResponses:
           - StatusCode: 200
-            ResponseParameters:
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
             ResponseTemplates:
               application/json: |
-                #set($inputRoot = $input.path('$'))
                 {
-                  "success": true,
-                  "message": null,
-                  "isFollower": $inputRoot.isFollower
+                  "success": $input.json('$.success'),
+                  "message": $input.json('$.message'),
+                  "isFollower": $input.json('$.isFollower')
                 }
-          - StatusCode: 400
-            SelectionPattern: ".*\\[Bad Request\\].*"
-            ResponseParameters:
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
-          - StatusCode: 500
-            SelectionPattern: ".*\\[Internal Service Error\\].*"
-            ResponseParameters:
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
       MethodResponses:
         - StatusCode: 200
           ResponseParameters:

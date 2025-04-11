@@ -21,8 +21,8 @@ export class UserService {
   ): Promise<boolean> {
     const request: GetIsRequest = {
       token: token,
-      user: user,
-      selectedUser: selectedUser,
+      user: user.dto,
+      selectedUser: selectedUser.dto,
     };
     return this.serverFacade.getIsFollowerStatus(request);
   }
@@ -30,7 +30,7 @@ export class UserService {
   public async getFolloweeCount(token: string, user: User): Promise<number> {
     const request: GetCountRequest = {
       token: token,
-      user: user,
+      user: user.dto,
     };
     return this.serverFacade.getFolloweeCount(request);
   }
@@ -38,7 +38,7 @@ export class UserService {
   public async getFollowerCount(token: string, user: User): Promise<number> {
     const request: GetCountRequest = {
       token: token,
-      user: user,
+      user: user.dto,
     };
     return this.serverFacade.getFollowerCount(request);
   }
@@ -49,7 +49,7 @@ export class UserService {
   ): Promise<[followerCount: number, followeeCount: number]> {
     const request: UnfollowRequest = {
       token: token,
-      userToUnfollow: userToUnfollow,
+      userToUnfollow: userToUnfollow.dto,
     };
     await this.serverFacade.unfollow(request);
 
@@ -60,9 +60,12 @@ export class UserService {
   }
 
   public async getUser(token: string, alias: string): Promise<User | null> {
+    // Clean up the alias by removing any URL parts and @ symbol
+    const cleanAlias = alias.replace(/^.*\//, '').replace(/^@/, '');
+
     const request: GetUserRequest = {
       token: token,
-      alias: alias,
+      alias: cleanAlias,
     };
     const response = await this.serverFacade.getUser(request);
     return User.fromDto(response ?? null);
@@ -72,15 +75,29 @@ export class UserService {
     token: string,
     userToFollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
-    const request: FollowRequest = {
-      token: token,
-      userToFollow: userToFollow,
-    };
-    await this.serverFacade.follow(request);
+    try {
+      const request: FollowRequest = {
+        token: token,
+        userToFollow: userToFollow.dto,
+      };
+      await this.serverFacade.follow(request);
 
-    const followerCount = await this.getFollowerCount(token, userToFollow);
-    const followeeCount = await this.getFolloweeCount(token, userToFollow);
+      // If follow was successful, get the updated counts
+      const followerCount = await this.getFollowerCount(token, userToFollow);
+      const followeeCount = await this.getFolloweeCount(token, userToFollow);
 
-    return [followerCount, followeeCount];
+      return [followerCount, followeeCount];
+    } catch (error) {
+      console.error('Error in follow operation:', error);
+      // If the error is due to invalid JSON, retry once
+      if (
+        error instanceof Error &&
+        error.message.includes('invalid response')
+      ) {
+        console.log('Retrying follow operation...');
+        return this.follow(token, userToFollow);
+      }
+      throw error;
+    }
   }
 }

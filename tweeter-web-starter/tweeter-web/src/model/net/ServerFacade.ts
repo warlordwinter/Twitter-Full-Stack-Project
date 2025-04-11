@@ -249,15 +249,22 @@ export class ServerFacade {
   }
 
   public async follow(request: FollowRequest): Promise<void> {
-    const response = await this.clientCommunicator.doPost<
-      FollowRequest,
-      FollowResponse
-    >(request, '/follow');
-    if (response.success) {
-      return;
-    } else {
-      console.error(response);
-      throw new Error(response.message ?? 'Unknown error');
+    try {
+      console.log('Sending follow request:', JSON.stringify(request));
+      const response = await this.clientCommunicator.doPost<
+        FollowRequest,
+        FollowResponse
+      >(request, '/follow');
+
+      if (response.success) {
+        return;
+      } else {
+        console.error('Follow response error:', response);
+        throw new Error(response.message ?? 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Error in follow request:', error);
+      throw new Error(`Failed to follow user: ${(error as Error).message}`);
     }
   }
   public async unfollow(request: UnfollowRequest): Promise<void> {

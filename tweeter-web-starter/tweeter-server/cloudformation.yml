@@ -944,11 +944,17 @@ Resources:
             ResponseTemplates:
               application/json: |
                 #set($inputRoot = $input.path('$'))
+                #if(!$inputRoot.statuses)
+                  #set($inputRoot.statuses = [])
+                #end
+                #if(!$inputRoot.hasMore)
+                  #set($inputRoot.hasMore = false)
+                #end
                 {
                   "success": true,
                   "message": null,
-                  "statuses": $inputRoot.statuses || [],
-                  "hasMore": $inputRoot.hasMore || false
+                  "statuses": $inputRoot.statuses,
+                  "hasMore": $inputRoot.hasMore
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"
@@ -1077,11 +1083,17 @@ Resources:
             ResponseTemplates:
               application/json: |
                 #set($inputRoot = $input.path('$'))
+                #if(!$inputRoot.statuses)
+                  #set($inputRoot.statuses = [])
+                #end
+                #if(!$inputRoot.hasMore)
+                  #set($inputRoot.hasMore = false)
+                #end
                 {
                   "success": true,
                   "message": null,
-                  "statuses": $inputRoot.statuses || [],
-                  "hasMore": $inputRoot.hasMore || false
+                  "statuses": $inputRoot.statuses,
+                  "hasMore": $inputRoot.hasMore
                 }
           - StatusCode: 400
             SelectionPattern: ".*\\[Bad Request\\].*"

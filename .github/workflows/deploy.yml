@@ -155,29 +155,29 @@ jobs:
             # Wait for stack creation to complete
             aws cloudformation wait stack-create-complete --stack-name tweeter-api
           fi
-      - name: Deploy API Gateway stage
-        run: |
-          # Extract REST_API_ID dynamically
-          REST_API_ID=$(aws apigateway get-rest-apis --query "items[0].id" --output text)
+      # - name: Deploy API Gateway stage
+      #   run: |
+      #     # Extract REST_API_ID dynamically
+      #     REST_API_ID=$(aws apigateway get-rest-apis --query "items[0].id" --output text)
 
-          # Extract STAGE_NAME dynamically (if you have multiple stages, adjust query accordingly)
-          STAGE_NAME=prod
+      #     # Extract STAGE_NAME dynamically (if you have multiple stages, adjust query accordingly)
+      #     STAGE_NAME=prod
 
-          # Extract DEPLOYMENT_ID dynamically (get the most recent deployment for the stage)
-          DEPLOYMENT_ID=$(aws apigateway get-deployments --rest-api-id $REST_API_ID --query "items[0].id" --output text)
+      #     # Extract DEPLOYMENT_ID dynamically (get the most recent deployment for the stage)
+      #     DEPLOYMENT_ID=$(aws apigateway get-deployments --rest-api-id $REST_API_ID --query "items[0].id" --output text)
 
-          # Debug output to verify variables
-          echo "REST_API_ID: $REST_API_ID"
-          echo "STAGE_NAME: $STAGE_NAME"
-          echo "DEPLOYMENT_ID: $DEPLOYMENT_ID"
+      #     # Debug output to verify variables
+      #     echo "REST_API_ID: $REST_API_ID"
+      #     echo "STAGE_NAME: $STAGE_NAME"
+      #     echo "DEPLOYMENT_ID: $DEPLOYMENT_ID"
 
-          # Update API Gateway stage with the extracted deployment ID
-          echo "Updating stage '$STAGE_NAME' for API $REST_API_ID to deployment $DEPLOYMENT_ID..."
+      #     # Update API Gateway stage with the extracted deployment ID
+      #     echo "Updating stage '$STAGE_NAME' for API $REST_API_ID to deployment $DEPLOYMENT_ID..."
 
-          if ! aws apigateway update-stage \
-            --rest-api-id $REST_API_ID \
-            --stage-name $STAGE_NAME \
-            --patch-operations op=replace,path=/deploymentId,value=$DEPLOYMENT_ID; then
-            echo "API Gateway stage update failed!" >&2
-            exit 1
-          fi
+      #     if ! aws apigateway update-stage \
+      #       --rest-api-id $REST_API_ID \
+      #       --stage-name $STAGE_NAME \
+      #       --patch-operations op=replace,path=/deploymentId,value=$DEPLOYMENT_ID; then
+      #       echo "API Gateway stage update failed!" >&2
+      #       exit 1
+      #     fi

@@ -18,6 +18,7 @@ export class UserDaoDynamoDB implements IUserDao {
   private readonly userTable: string;
   private readonly region: string = 'us-west-2';
   private readonly authenticator: IAuthenticator;
+  private readonly tableName = 'user-v1';
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(

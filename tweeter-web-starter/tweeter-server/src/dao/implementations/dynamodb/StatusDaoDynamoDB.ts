@@ -11,8 +11,8 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 export class StatusDaoDynamoDB implements IStatusDao {
   private readonly dynamoClient;
   private readonly region: string = 'us-west-2';
-  private readonly storyTable: string = 'story';
-  private readonly feedTable: string = 'feed';
+  private readonly storyTableName = 'story-v1';
+  private readonly feedTableName = 'feed-v1';
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(
@@ -26,7 +26,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
     lastItem: StatusDto | null
   ): Promise<[StatusDto[], boolean]> {
     const params = {
-      TableName: this.storyTable,
+      TableName: this.storyTableName,
       KeyConditionExpression: 'sender_alias = :sender_alias',
       ExpressionAttributeValues: {
         ':sender_alias': userAlias,
@@ -61,7 +61,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
     lastItem: StatusDto | null
   ): Promise<[StatusDto[], boolean]> {
     const params = {
-      TableName: this.feedTable,
+      TableName: this.feedTableName,
       KeyConditionExpression: 'receiver_alias = :receiver_alias',
       ExpressionAttributeValues: {
         ':receiver_alias': userAlias,
@@ -93,7 +93,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
 
   async postStory(token: string, newStatus: StatusDto): Promise<void> {
     const params = {
-      TableName: this.storyTable,
+      TableName: this.storyTableName,
       Item: {
         sender_alias: newStatus.user.alias,
         timestamp: newStatus.timestamp.toString(),
@@ -111,7 +111,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
 
   async postFeed(receiver_alias: string, newStatus: StatusDto): Promise<void> {
     const params = {
-      TableName: this.feedTable,
+      TableName: this.feedTableName,
       Item: {
         receiver_alias: receiver_alias,
         'isodate+sender_alias':
@@ -139,7 +139,7 @@ export class StatusDaoDynamoDB implements IStatusDao {
     for (let i = 0; i < receiver_aliases.length; i += BATCH_SIZE) {
       const batch = receiver_aliases.slice(i, i + BATCH_SIZE);
       const requestItems = {
-        [this.feedTable]: batch.map(receiver_alias => ({
+        [this.feedTableName]: batch.map(receiver_alias => ({
           PutRequest: {
             Item: {
               receiver_alias: receiver_alias,

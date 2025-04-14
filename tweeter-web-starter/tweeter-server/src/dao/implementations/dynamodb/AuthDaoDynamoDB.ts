@@ -19,6 +19,7 @@ export class AuthDaoDynamoDB implements IAuthDao {
   private readonly saltRounds: number = 10;
   private readonly bucketName: string;
   private readonly region: string = 'us-west-2';
+  private readonly tableName = 'authtoken-v1';
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(

@@ -4,21 +4,20 @@ import { IAuthenticator } from '../../interfaces/IAuthenticator';
 
 export class DynamoDBAuthenticator implements IAuthenticator {
   private readonly dynamoClient;
-  private readonly authTable: string;
+  private readonly tableName = 'authtoken-v1';
   private readonly region: string = 'us-west-2';
 
   constructor() {
     this.dynamoClient = DynamoDBDocumentClient.from(
       new DynamoDBClient({ region: this.region })
     );
-    this.authTable = 'authtoken';
   }
 
   async lookup(token: string): Promise<string> {
     try {
       const result = await this.dynamoClient.send(
         new GetCommand({
-          TableName: this.authTable,
+          TableName: this.tableName,
           Key: { token },
         })
       );
@@ -38,7 +37,7 @@ export class DynamoDBAuthenticator implements IAuthenticator {
     try {
       console.log('Authenticating token:', token);
       const params = {
-        TableName: this.authTable,
+        TableName: this.tableName,
         Key: { token },
       };
       const result = await this.dynamoClient.send(new GetCommand(params));

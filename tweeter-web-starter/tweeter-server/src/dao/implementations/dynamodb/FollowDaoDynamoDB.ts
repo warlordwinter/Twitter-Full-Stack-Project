@@ -14,7 +14,7 @@ import { UserDaoDynamoDB } from './UserDaoDynamoDB';
 export class FollowDaoDynamoDB implements IFollowDao {
   private readonly dynamoClient;
   private readonly region: string = 'us-west-2';
-  readonly tableName = 'follows-us-west-2';
+  private readonly tableName = 'follows-us-west-2-v1';
   readonly userTableName = 'user';
   readonly followerAliasAttr = 'follower_handle';
   readonly followeeAliasAttr = 'followee_handle';

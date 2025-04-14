@@ -25,7 +25,6 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub post-status-queue-${Timestamp}
-      ContentBasedDeduplication: false
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
       ReceiveMessageWaitTimeSeconds: 20
@@ -36,7 +35,6 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub update-feed-queue-${Timestamp}
-      ContentBasedDeduplication: false
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
       ReceiveMessageWaitTimeSeconds: 20

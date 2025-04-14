@@ -6,7 +6,7 @@ import {
   BatchWriteCommandOutput,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { User } from 'tweeter-shared';
 
 export class FillUserTableDao {

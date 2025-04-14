@@ -207,12 +207,12 @@ Resources:
                   - dynamodb:Scan
                   - dynamodb:BatchWriteItem
                 Resource:
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2/index/follows_index
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/feed
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/user-v1
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/authtoken-v1
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2-v1
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2-v1/index/follows_index
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story-v1
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/feed-v1
 
   # API Gateway
   TweeterApi:

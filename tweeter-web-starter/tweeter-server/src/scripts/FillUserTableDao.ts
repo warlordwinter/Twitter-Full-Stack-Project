@@ -13,12 +13,12 @@ export class FillUserTableDao {
   //
   // Modify these values as needed to match your user table.
   //
-  private readonly tableName = 'tweeter_user';
+  private readonly tableName = 'user';
   private readonly userAliasAttribute = 'alias';
-  private readonly userFirstNameAttribute = 'first_name';
-  private readonly userLastNameAttribute = 'last_name';
-  private readonly userImageUrlAttribute = 'image_url';
-  private readonly passwordHashAttribute = 'password_hash';
+  private readonly userFirstNameAttribute = 'firstName';
+  private readonly userLastNameAttribute = 'lastName';
+  private readonly userImageUrlAttribute = 'imageUrl';
+  private readonly passwordHashAttribute = 'password';
   private readonly followeeCountAttribute = 'followee_count';
   private readonly followerCountAttribute = 'follower_count';
 
@@ -113,13 +113,9 @@ export class FillUserTableDao {
     const params = {
       TableName: this.tableName,
       Key: { [this.userAliasAttribute]: alias },
-      ExpressionAttributeValues: { ':inc': count },
-      UpdateExpression:
-        'SET ' +
-        this.followerCountAttribute +
-        ' = ' +
-        this.followerCountAttribute +
-        ' + :inc',
+      ExpressionAttributeValues: { ':inc': count, ':zero': 0 },
+      ExpressionAttributeNames: { '#count': this.followerCountAttribute },
+      UpdateExpression: 'SET #count = if_not_exists(#count, :zero) + :inc',
     };
 
     try {

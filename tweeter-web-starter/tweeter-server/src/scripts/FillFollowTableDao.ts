@@ -10,9 +10,11 @@ export class FillFollowTableDao {
   //
   // Modify these values as needed to match your follow table.
   //
-  private readonly tableName = 'tweeter_follow';
-  private readonly followerAliasAttribute = 'follower_alias';
-  private readonly followeeAliasAttribute = 'followee_alias';
+  private readonly tableName = 'follows-us-west-2';
+  private readonly followerAliasAttribute = 'follower_handle';
+  private readonly followeeAliasAttribute = 'followee_handle';
+  private readonly followerNameAttribute = 'follower_name';
+  private readonly followeeNameAttribute = 'followee_name';
 
   private readonly client = DynamoDBDocumentClient.from(new DynamoDBClient());
 

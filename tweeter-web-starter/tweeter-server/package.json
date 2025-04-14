@@ -6,7 +6,8 @@
   "scripts": {
     "build": "npm run compile",
     "compile": "npm run clean && tsc",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "pop": "npx ts-node src/scripts/BatchLoadScript.ts"
   },
   "author": "Wiley Welch",
   "license": "ISC",

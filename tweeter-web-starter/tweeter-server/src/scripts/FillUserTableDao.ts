@@ -13,7 +13,7 @@ export class FillUserTableDao {
   //
   // Modify these values as needed to match your user table.
   //
-  private readonly tableName = 'user';
+  private readonly tableName = 'user-v1';
   private readonly userAliasAttribute = 'alias';
   private readonly userFirstNameAttribute = 'firstName';
   private readonly userLastNameAttribute = 'lastName';

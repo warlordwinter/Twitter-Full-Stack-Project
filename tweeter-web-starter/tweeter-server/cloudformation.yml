@@ -20,6 +20,31 @@ Parameters:
     Default: v1
 
 Resources:
+  # SQS Queues
+  PostStatusQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub post-status-queue-${Timestamp}
+      FifoQueue: false
+      ContentBasedDeduplication: false
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 86400
+      ReceiveMessageWaitTimeSeconds: 20
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+
+  UpdateFeedQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub update-feed-queue-${Timestamp}
+      FifoQueue: false
+      ContentBasedDeduplication: false
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 86400
+      ReceiveMessageWaitTimeSeconds: 20
+      DelaySeconds: 0
+      MaximumMessageSize: 262144
+
   # AWS Dynamo Tables
   AuthTable:
     Type: 'AWS::DynamoDB::Table'
@@ -213,6 +238,15 @@ Resources:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/follows-us-west-2-v1/index/follows_index
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/story-v1
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/feed-v1
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource:
+                  - !GetAtt PostStatusQueue.Arn
+                  - !GetAtt UpdateFeedQueue.Arn
 
   # API Gateway
   TweeterApi:
@@ -2091,10 +2125,83 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TweeterApi}/*/POST/user
 
+  # PostUpdateFeedMessages Lambda
+  PostUpdateFeedMessagesLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub PostUpdateFeedMessagesLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/queue/PostUpdateFeedMessagesLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # UpdateFeeds Lambda
+  UpdateFeedsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub UpdateFeedsLambda-${Timestamp}
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref LambdasKey
+      Handler: lambda/queue/UpdateFeedsLambda.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Layers:
+        - !Ref TweeterSharedLayer
+      Timeout: 30
+      MemorySize: 128
+
+  # SQS Event Source Mapping for PostUpdateFeedMessages Lambda
+  PostUpdateFeedMessagesEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt PostStatusQueue.Arn
+      FunctionName: !Ref PostUpdateFeedMessagesLambda
+      BatchSize: 10
+
+  # SQS Event Source Mapping for UpdateFeeds Lambda
+  UpdateFeedsEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt UpdateFeedQueue.Arn
+      FunctionName: !Ref UpdateFeedsLambda
+      BatchSize: 10
+
+  # Lambda Permissions for SQS
+  PostUpdateFeedMessagesLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PostUpdateFeedMessagesLambda
+      Principal: sqs.amazonaws.com
+      SourceArn: !GetAtt PostStatusQueue.Arn
+
+  UpdateFeedsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateFeedsLambda
+      Principal: sqs.amazonaws.com
+      SourceArn: !GetAtt UpdateFeedQueue.Arn
+
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
     Value: !Sub https://${TweeterApi}.execute-api.${AWS::Region}.amazonaws.com/prod/
+
+  PostStatusQueueArn:
+    Description: ARN of the Post Status SQS queue
+    Value: !GetAtt PostStatusQueue.Arn
+
+  UpdateFeedQueueArn:
+    Description: ARN of the Update Feed SQS queue
+    Value: !GetAtt UpdateFeedQueue.Arn
 
   GetFolloweesEndpoint:
     Description: Get Followees API endpoint

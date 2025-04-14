@@ -25,7 +25,6 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub post-status-queue-${Timestamp}
-      FifoQueue: false
       ContentBasedDeduplication: false
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
@@ -37,7 +36,6 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub update-feed-queue-${Timestamp}
-      FifoQueue: false
       ContentBasedDeduplication: false
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
@@ -244,9 +242,16 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:DeleteMessage
                   - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
                 Resource:
                   - !GetAtt PostStatusQueue.Arn
                   - !GetAtt UpdateFeedQueue.Arn
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:PostUpdateFeedMessagesLambda-${Timestamp}
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:UpdateFeedsLambda-${Timestamp}
 
   # API Gateway
   TweeterApi:

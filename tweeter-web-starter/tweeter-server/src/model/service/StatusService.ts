@@ -11,11 +11,17 @@ import {
   SQSClient,
 } from '@aws-sdk/client-sqs';
 
+const FOLLOWERS_PER_JOB = 25; // Number of followers to process in each job
+const BATCH_SIZE = 10; // SQS batch size limit
+
 export class StatusService {
   private statusDao: IStatusDao;
   private authenticator: IAuthenticator;
   private followDao: IFollowDao;
   private sqsClient: SQSClient;
+  private readonly postQueueUrl: string;
+  private readonly jobQueueUrl: string;
+
   constructor(daoFactory: IDaoFactory) {
     this.statusDao = daoFactory.createStatusDao();
     this.authenticator = new DynamoDBAuthenticator();
@@ -29,6 +35,10 @@ export class StatusService {
         maxSockets: 50,
       },
     });
+    this.postQueueUrl =
+      'https://sqs.us-west-2.amazonaws.com/787386855542/post-status-queue';
+    this.jobQueueUrl =
+      'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue';
   }
 
   public async loadMoreFeed(
@@ -95,18 +105,25 @@ export class StatusService {
     return this.statusDao.getPageOfStory(userAlias, pageSize, lastItem);
   }
 
-  public async batchPostFeed(
-    followerAliases: string[],
-    newStatus: StatusDto
-  ): Promise<void> {
-    await this.statusDao.batchPostFeed(followerAliases, newStatus);
-  }
-
   public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
     try {
-      // First update the user's story
+      // Just post to the user's story and queue the status
       await this.statusDao.postStory(token, newStatus);
 
+      // Queue the status for processing
+      const command = new SendMessageCommand({
+        QueueUrl: this.postQueueUrl,
+        MessageBody: JSON.stringify(newStatus),
+      });
+      await this.sqsClient.send(command);
+    } catch (error) {
+      console.error('Error in postStatus:', error);
+      throw error;
+    }
+  }
+
+  public async processNewStatus(newStatus: StatusDto): Promise<void> {
+    try {
       // Get all followers
       const [followers] = await this.followDao.getFollowers(
         newStatus.user.alias,
@@ -114,92 +131,41 @@ export class StatusService {
         null
       );
 
-      // Prepare batch of messages (SQS allows max 10 messages per batch)
-      const BATCH_SIZE = 10;
-      const FOLLOWERS_PER_MESSAGE = 25;
-      const batchedFollowerAliases = [];
-
-      for (let i = 0; i < followers.length; i += FOLLOWERS_PER_MESSAGE) {
-        const batch = followers
-          .slice(i, i + FOLLOWERS_PER_MESSAGE)
-          .map(f => f.alias);
-        batchedFollowerAliases.push(batch);
+      // Split followers into jobs
+      const jobs = [];
+      for (let i = 0; i < followers.length; i += FOLLOWERS_PER_JOB) {
+        const jobFollowers = followers.slice(i, i + FOLLOWERS_PER_JOB);
+        jobs.push({
+          followerAliases: jobFollowers.map(f => f.alias),
+          newStatus: newStatus,
+        });
       }
 
-      const messages = batchedFollowerAliases.map((aliasBatch, index) => ({
-        Id: `message_${index}`,
-        MessageBody: JSON.stringify({
-          followerAliases: aliasBatch,
-          newStatus,
-        }),
-      }));
+      // Send jobs to queue in batches
+      for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
+        const batch = jobs.slice(i, i + BATCH_SIZE);
+        const messages = batch.map((job, index) => ({
+          Id: `message_${i + index}`,
+          MessageBody: JSON.stringify(job),
+        }));
 
-      // Send messages in batches of 10
-      for (let i = 0; i < messages.length; i += BATCH_SIZE) {
-        const batch = messages.slice(i, i + BATCH_SIZE);
         const command = new SendMessageBatchCommand({
-          QueueUrl:
-            'https://sqs.us-west-2.amazonaws.com/787386855542/post-status-queue',
-          Entries: batch,
+          QueueUrl: this.jobQueueUrl,
+          Entries: messages,
         });
         await this.sqsClient.send(command);
+        console.log(`Sent batch of ${batch.length} jobs to job queue`);
       }
     } catch (error) {
-      console.error('Error in postStatus:', error);
+      console.error('Error processing new status:', error);
       throw error;
     }
   }
 
-  public async updateFeeds(
-    token: string,
-    userAlias: string,
-    pageSize: number,
-    lastItem: StatusDto | null
+  public async processFeedJob(
+    followerAliases: string[],
+    newStatus: StatusDto
   ): Promise<void> {
-    // Get the user's followers (people who follow them)
-    const [followers] = await this.followDao.getFollowers(
-      userAlias, // This is the followee_handle (the person being followed)
-      1000,
-      null
-    );
-
-    // Prepare batch of messages (SQS allows max 10 messages per batch)
-    const BATCH_SIZE = 10;
-    const messages = followers.map((follower, index) => ({
-      Id: `message_${index}`,
-      MessageBody: JSON.stringify({
-        token: token,
-        followerAlias: follower.alias, // This is the follower's alias
-        followeeAlias: userAlias, // This is the person being followed
-        pageSize: pageSize,
-        lastItem: lastItem,
-      }),
-    }));
-
-    // Process messages in smaller chunks to prevent socket exhaustion
-    const CHUNK_SIZE = 5; // Process 5 batches at a time
-    for (let i = 0; i < messages.length; i += BATCH_SIZE * CHUNK_SIZE) {
-      const chunk = messages.slice(i, i + BATCH_SIZE * CHUNK_SIZE);
-
-      // Process each batch in the chunk
-      const batchPromises = [];
-      for (let j = 0; j < chunk.length; j += BATCH_SIZE) {
-        const batch = chunk.slice(j, j + BATCH_SIZE);
-        const command = new SendMessageBatchCommand({
-          QueueUrl:
-            'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue',
-          Entries: batch,
-        });
-        batchPromises.push(this.sqsClient.send(command));
-      }
-
-      // Wait for all batches in this chunk to complete
-      await Promise.all(batchPromises);
-
-      // Add a small delay between chunks to prevent socket exhaustion
-      if (i + BATCH_SIZE * CHUNK_SIZE < messages.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
+    await this.statusDao.batchPostFeed(followerAliases, newStatus);
   }
 }

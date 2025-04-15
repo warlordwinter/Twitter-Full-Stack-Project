@@ -12,7 +12,7 @@ export const handler = async function (event: any) {
 
     try {
       // Update feeds for the batch of followers
-      await statusService.batchPostFeed(
+      await statusService.processFeedJob(
         message.followerAliases,
         message.newStatus
       );

@@ -20,7 +20,15 @@ export class StatusService {
     this.statusDao = daoFactory.createStatusDao();
     this.authenticator = new DynamoDBAuthenticator();
     this.followDao = daoFactory.createFollowDao();
-    this.sqsClient = new SQSClient({ region: 'us-west-2' });
+    this.sqsClient = new SQSClient({
+      region: 'us-west-2',
+      maxAttempts: 3,
+      requestHandler: {
+        connectionTimeout: 1000,
+        socketTimeout: 1000,
+        maxSockets: 50,
+      },
+    });
   }
 
   public async loadMoreFeed(
@@ -131,7 +139,7 @@ export class StatusService {
         const batch = messages.slice(i, i + BATCH_SIZE);
         const command = new SendMessageBatchCommand({
           QueueUrl:
-            'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue-20250414192537',
+            'https://sqs.us-west-2.amazonaws.com/787386855542/post-status-queue',
           Entries: batch,
         });
         await this.sqsClient.send(command);
@@ -179,7 +187,7 @@ export class StatusService {
         const batch = chunk.slice(j, j + BATCH_SIZE);
         const command = new SendMessageBatchCommand({
           QueueUrl:
-            'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue-20250414192537',
+            'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue',
           Entries: batch,
         });
         batchPromises.push(this.sqsClient.send(command));

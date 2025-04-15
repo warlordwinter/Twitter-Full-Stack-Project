@@ -1201,7 +1201,7 @@ Resources:
       Runtime: nodejs20.x
       Layers:
         - !Ref TweeterSharedLayer
-      Timeout: 30
+      Timeout: 150
       MemorySize: 128
 
   # API Gateway Resources for Post Status

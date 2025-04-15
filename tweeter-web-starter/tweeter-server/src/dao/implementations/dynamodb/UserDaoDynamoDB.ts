@@ -122,10 +122,11 @@ export class UserDaoDynamoDB implements IUserDao {
   }
 
   async getUser(alias: string): Promise<User | null> {
+    const fixedAlias = '@' + alias;
     const result = await this.dynamoClient.send(
       new GetCommand({
         TableName: this.userTable,
-        Key: { alias },
+        Key: { alias: fixedAlias },
       })
     );
     return result.Item as User | null;

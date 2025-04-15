@@ -108,13 +108,21 @@ export class StatusService {
 
       // Prepare batch of messages (SQS allows max 10 messages per batch)
       const BATCH_SIZE = 10;
-      const messages = followers.map((follower, index) => ({
+      const FOLLOWERS_PER_MESSAGE = 25;
+      const batchedFollowerAliases = [];
+
+      for (let i = 0; i < followers.length; i += FOLLOWERS_PER_MESSAGE) {
+        const batch = followers
+          .slice(i, i + FOLLOWERS_PER_MESSAGE)
+          .map(f => f.alias);
+        batchedFollowerAliases.push(batch);
+      }
+
+      const messages = batchedFollowerAliases.map((aliasBatch, index) => ({
         Id: `message_${index}`,
         MessageBody: JSON.stringify({
-          token: token,
-          userAlias: follower.alias,
-          pageSize: 10,
-          lastItem: null,
+          followerAliases: aliasBatch,
+          newStatus,
         }),
       }));
 
@@ -140,8 +148,8 @@ export class StatusService {
     pageSize: number,
     lastItem: StatusDto | null
   ): Promise<void> {
-    // Get the user's followees (people they follow)
-    const [followees] = await this.followDao.getFollowees(
+    // Get the user's followers (people who follow them)
+    const [followers] = await this.followDao.getFollowers(
       userAlias,
       1000,
       null
@@ -149,7 +157,7 @@ export class StatusService {
 
     // Prepare batch of messages (SQS allows max 10 messages per batch)
     const BATCH_SIZE = 10;
-    const messages = followees.map((followee, index) => ({
+    const messages = followers.map((followee, index) => ({
       Id: `message_${index}`,
       MessageBody: JSON.stringify({
         token: token,

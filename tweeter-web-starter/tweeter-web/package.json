@@ -52,7 +52,10 @@
     "transform": {
       "^.+\\.tsx?$": "ts-jest",
       "\\.js$": "babel-jest"
-    }
+    },
+    "setupFiles": [
+      "<rootDir>/test/setupTests.ts"
+    ]
   },
   "browserslist": {
     "production": [

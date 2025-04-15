@@ -137,7 +137,9 @@ export class ServerFacade {
     }
   }
 
-  public async postStatus(request: PostStatusRequest): Promise<void> {
+  public async postStatus(
+    request: PostStatusRequest
+  ): Promise<PostStatusResponse> {
     const response = await this.clientCommunicator.doPost<
       PostStatusRequest,
       PostStatusResponse
@@ -145,7 +147,7 @@ export class ServerFacade {
 
     if (response.success) {
       console.log('Status posted successfully');
-      return;
+      return response;
     } else {
       console.error(response);
       throw new Error(response.message ?? 'Unknown error');

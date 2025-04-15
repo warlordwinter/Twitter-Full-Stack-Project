@@ -2141,8 +2141,9 @@ Resources:
       Runtime: nodejs20.x
       Layers:
         - !Ref TweeterSharedLayer
-      Timeout: 30
-      MemorySize: 128
+      Timeout: 300
+      MemorySize: 512
+      ReservedConcurrentExecutions: 10
 
   # UpdateFeeds Lambda
   UpdateFeedsLambda:
@@ -2157,8 +2158,9 @@ Resources:
       Runtime: nodejs20.x
       Layers:
         - !Ref TweeterSharedLayer
-      Timeout: 30
-      MemorySize: 128
+      Timeout: 300
+      MemorySize: 512
+      ReservedConcurrentExecutions: 10
 
   # SQS Event Source Mapping for PostUpdateFeedMessages Lambda
   PostUpdateFeedMessagesEventSource:

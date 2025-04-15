@@ -24,7 +24,7 @@ Resources:
   PostStatusQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub post-status-queue-${Timestamp}
+      QueueName: post-status-queue
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
       ReceiveMessageWaitTimeSeconds: 20
@@ -34,7 +34,7 @@ Resources:
   UpdateFeedQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub update-feed-queue-${Timestamp}
+      QueueName: update-feed-queue
       VisibilityTimeout: 300
       MessageRetentionPeriod: 86400
       ReceiveMessageWaitTimeSeconds: 20

@@ -158,19 +158,19 @@ export class StatusService {
   ): Promise<void> {
     // Get the user's followers (people who follow them)
     const [followers] = await this.followDao.getFollowers(
-      userAlias,
+      userAlias, // This is the followee_handle (the person being followed)
       1000,
       null
     );
 
     // Prepare batch of messages (SQS allows max 10 messages per batch)
     const BATCH_SIZE = 10;
-    const messages = followers.map((followee, index) => ({
+    const messages = followers.map((follower, index) => ({
       Id: `message_${index}`,
       MessageBody: JSON.stringify({
         token: token,
-        followerAlias: userAlias,
-        followeeAlias: followee.alias,
+        followerAlias: follower.alias, // This is the follower's alias
+        followeeAlias: userAlias, // This is the person being followed
         pageSize: pageSize,
         lastItem: lastItem,
       }),

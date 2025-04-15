@@ -32,6 +32,11 @@ export class FollowDaoDynamoDB implements IFollowDao {
     pageSize: number,
     lastItem: UserDto | null
   ): Promise<[UserDto[], boolean]> {
+    if (!userAlias) {
+      console.error('Invalid userAlias provided to getFollowers');
+      return [[], false];
+    }
+
     const params: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: 'follows_index',
@@ -50,22 +55,41 @@ export class FollowDaoDynamoDB implements IFollowDao {
       };
     }
 
-    const result = await this.dynamoClient.send(new QueryCommand(params));
+    try {
+      const result = await this.dynamoClient.send(new QueryCommand(params));
 
-    // Get complete user information for each follower
-    const followers = await Promise.all(
-      result.Items?.map(async item => {
-        const followerAlias = item[this.followerAliasAttr];
-        const user = await this.userDao.getUser(followerAlias);
-        if (!user) {
-          throw new Error(`User not found: ${followerAlias}`);
-        }
-        return user;
-      }) || []
-    );
+      if (!result.Items || result.Items.length === 0) {
+        return [[], false];
+      }
 
-    const hasMore = !!result.LastEvaluatedKey;
-    return [followers, hasMore];
+      // Get complete user information for each follower
+      const followers = await Promise.all(
+        result.Items.map(async item => {
+          const followerAlias = item[this.followerAliasAttr];
+          try {
+            const user = await this.userDao.getUser(followerAlias);
+            if (!user) {
+              console.error(`User not found: ${followerAlias}`);
+              return null;
+            }
+            return user;
+          } catch (error) {
+            console.error(`Error getting user ${followerAlias}:`, error);
+            return null;
+          }
+        })
+      );
+
+      // Filter out any null values from failed user lookups
+      const validFollowers = followers.filter(
+        (follower): follower is UserDto => follower !== null
+      );
+      const hasMore = !!result.LastEvaluatedKey;
+      return [validFollowers, hasMore];
+    } catch (error) {
+      console.error('Error in getFollowers:', error);
+      return [[], false];
+    }
   }
 
   async getFollowees(

@@ -160,15 +160,30 @@ export class StatusService {
       }),
     }));
 
-    // Send messages in batches of 10
-    for (let i = 0; i < messages.length; i += BATCH_SIZE) {
-      const batch = messages.slice(i, i + BATCH_SIZE);
-      const command = new SendMessageBatchCommand({
-        QueueUrl:
-          'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue-20250414192537',
-        Entries: batch,
-      });
-      await this.sqsClient.send(command);
+    // Process messages in smaller chunks to prevent socket exhaustion
+    const CHUNK_SIZE = 5; // Process 5 batches at a time
+    for (let i = 0; i < messages.length; i += BATCH_SIZE * CHUNK_SIZE) {
+      const chunk = messages.slice(i, i + BATCH_SIZE * CHUNK_SIZE);
+
+      // Process each batch in the chunk
+      const batchPromises = [];
+      for (let j = 0; j < chunk.length; j += BATCH_SIZE) {
+        const batch = chunk.slice(j, j + BATCH_SIZE);
+        const command = new SendMessageBatchCommand({
+          QueueUrl:
+            'https://sqs.us-west-2.amazonaws.com/787386855542/update-feed-queue-20250414192537',
+          Entries: batch,
+        });
+        batchPromises.push(this.sqsClient.send(command));
+      }
+
+      // Wait for all batches in this chunk to complete
+      await Promise.all(batchPromises);
+
+      // Add a small delay between chunks to prevent socket exhaustion
+      if (i + BATCH_SIZE * CHUNK_SIZE < messages.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
   }
 }
